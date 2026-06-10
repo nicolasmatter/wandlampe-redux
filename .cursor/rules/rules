@@ -1,0 +1,83 @@
+# Nano ESP32 — WS2812B LED strip firmware
+
+## Project context
+
+This is a PlatformIO project targeting the Arduino Nano ESP32 (ESP32-S3 core, 3.3V logic).
+
+### Hardware setup
+- Board: Arduino Nano ESP32 (arduino_nano_esp32)
+- Framework: Arduino
+- LED library: FastLED
+- 24x WS2812B LEDs, GRB order, 5V
+- Powered via USB-C → VBUS pin provides 5V to strip
+- Data line: GPIO6 → 74AHCT125 level shifter (3.3V→5V) → 300Ω resistor → strip DIN
+- Toggle switch: SPST on GPIO4, INPUT_PULLUP, pin2 to GND
+- 1000µF capacitor across strip 5V/GND pads
+- Shared GND across all components
+
+### platformio.ini
+```ini
+[env:arduino_nano_esp32]
+platform = pioarduino
+board = arduino_nano_esp32
+framework = arduino
+lib_deps = fastled/FastLED
+```
+
+### Firmware logic
+- Toggle switch advances a state machine on every edge transition (either direction)
+- Cycle: off (black) → mode 1 → off (black) → mode 2 → repeat
+- FastLED.setBrightness(128) — 50% cap to stay within USB VBUS current budget (~720mA)
+- Debounce: 50ms
+
+### Base firmware (src/main.cpp)
+```cpp
+#include <FastLED.h>
+#define LED_PIN     6
+#define SWITCH_PIN  4
+#define NUM_LEDS    24
+CRGB leds[NUM_LEDS];
+const int states[] = {0, 1, 0, 2};
+int stateIndex = 0;
+bool lastSwitchState = LOW;
+unsigned long lastDebounce = 0;
+const int DEBOUNCE_MS = 50;
+
+void setup() {
+  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.setBrightness(128);
+  pinMode(SWITCH_PIN, INPUT_PULLUP);
+}
+
+void loop() {
+  bool current = digitalRead(SWITCH_PIN);
+  if (current != lastSwitchState && millis() - lastDebounce > DEBOUNCE_MS) {
+    lastDebounce = millis();
+    lastSwitchState = current;
+    stateIndex = (stateIndex + 1) % 4;
+  }
+  switch (states[stateIndex]) {
+    case 0: fill_solid(leds, NUM_LEDS, CRGB::Black); break;
+    case 1: // mode 1
+      fill_solid(leds, NUM_LEDS, CRGB::White); break;
+    case 2: // mode 2
+      fill_solid(leds, NUM_LEDS, CRGB::Blue); break;
+  }
+  FastLED.show();
+}
+```
+
+## Coding rules
+
+- Always use FastLED — never Adafruit NeoPixel
+- Keep GRB colour order for WS2812B
+- Never exceed FastLED.setBrightness(128) unless the user explicitly confirms they are using an external PSU instead of VBUS
+- The ESP32-S3 GPIO outputs 3.3V logic — the 74AHCT125 handles level shifting, but avoid anything that bypasses it
+- When adding animations that block loop(), use millis()-based non-blocking patterns instead of delay()
+- Always provide the full src/main.cpp when making changes — no partial snippets
+- Flag any change that increases peak current draw above ~700mA
+
+## Wiring constraints to keep in mind
+- VBUS is limited by the USB host (typically 500mA laptop, up to 2A wall adapter)
+- Adding more LEDs beyond 24 requires calculating new current budget before recommending
+- A logic level shifter is required on the data line — do not suggest removing it
