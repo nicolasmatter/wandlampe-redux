@@ -1,0 +1,20 @@
+# PlatformIO
+.pio/
+.cache/
+
+# Secrets
+include/secrets.h
+
+# VSCode
+.vscode/.browse.c_cpp.db*
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/ipch
+compile_commands.json
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
