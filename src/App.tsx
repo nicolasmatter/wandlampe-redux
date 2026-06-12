@@ -1,49 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
-import { HexColorPicker } from 'react-colorful'
+import { LedStrip } from './components/LedStrip'
+import { ModeTypeEditor, ModeTypeSelector, modeTypeShort } from './components/ModeEditor'
 import { LED_COUNT, MAX_MODES } from './config'
-import { defaultModes, emptyMode, useMqtt } from './useMqtt'
-import type { Mode, RGB } from './types'
+import {
+  changeModeType,
+  cloneModes,
+  createMode,
+  defaultModes,
+  hexToRgb,
+  loadLocalModes,
+  saveLocalModes,
+} from './modeUtils'
+import { useMqtt } from './useMqtt'
+import type { Mode, ModeType } from './types'
+import { MODE_TYPE_LABELS } from './types'
 import './App.css'
-
-function hexToRgb(hex: string): RGB {
-  const n = parseInt(hex.slice(1), 16)
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
-}
-
-function rgbToHex({ r, g, b }: RGB) {
-  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')
-}
-
-function cloneModes(modes: Mode[]): Mode[] {
-  return modes.map(mode => ({
-    ...mode,
-    leds: mode.leds.map(led => ({ ...led })),
-  }))
-}
 
 export default function App() {
   const [username, setUsername] = useState(() => sessionStorage.getItem('mq_user') ?? '')
   const [password, setPassword] = useState(() => sessionStorage.getItem('mq_pass') ?? '')
   const [authed, setAuthed] = useState(!!(sessionStorage.getItem('mq_user') && sessionStorage.getItem('mq_pass')))
 
-  const [modes, setModes] = useState<Mode[]>(() => defaultModes())
+  const [modes, setModes] = useState<Mode[]>(() => loadLocalModes() ?? defaultModes())
   const [activeModeIndex, setActiveModeIndex] = useState(0)
+  const [dirty, setDirty] = useState(false)
   const [brushColor, setBrushColor] = useState('#ffffff')
+  const [showAddMenu, setShowAddMenu] = useState(false)
   const isPainting = useRef(false)
+  const skipDirty = useRef(true)
 
   const { status, deviceStatus, retainedModes, publish } = useMqtt(authed ? username : '', authed ? password : '')
 
   useEffect(() => {
     if (retainedModes) {
+      skipDirty.current = true
       setModes(cloneModes(retainedModes))
       setActiveModeIndex(0)
+      setDirty(false)
+      saveLocalModes(retainedModes)
     }
   }, [retainedModes])
 
   useEffect(() => {
-    function stopPainting() {
-      isPainting.current = false
+    saveLocalModes(modes)
+    if (skipDirty.current) {
+      skipDirty.current = false
+      return
     }
+    setDirty(true)
+  }, [modes])
+
+  useEffect(() => {
+    function stopPainting() { isPainting.current = false }
     window.addEventListener('pointerup', stopPainting)
     window.addEventListener('pointercancel', stopPainting)
     return () => {
@@ -64,8 +72,10 @@ export default function App() {
   }
 
   function paintLed(i: number) {
+    if (!isPainting.current) return
     const rgb = hexToRgb(brushColor)
     updateMode(mode => {
+      if (mode.type !== 'static' || !mode.leds) return mode
       const leds = [...mode.leds]
       leds[i] = rgb
       return { ...mode, leds }
@@ -74,17 +84,20 @@ export default function App() {
 
   function fillAll() {
     const rgb = hexToRgb(brushColor)
-    updateMode(mode => ({ ...mode, leds: Array(LED_COUNT).fill(rgb) }))
+    updateMode(mode => mode.type === 'static' ? { ...mode, leds: Array(LED_COUNT).fill(rgb) } : mode)
   }
 
   function clearAll() {
-    updateMode(mode => ({ ...mode, leds: Array(LED_COUNT).fill({ r: 0, g: 0, b: 0 }) }))
+    updateMode(mode => mode.type === 'static'
+      ? { ...mode, leds: Array(LED_COUNT).fill({ r: 0, g: 0, b: 0 }) }
+      : mode)
   }
 
-  function addMode() {
+  function addMode(type: ModeType) {
     if (modes.length >= MAX_MODES) return
-    setModes(prev => [...prev, emptyMode(prev.length)])
+    setModes(prev => [...prev, createMode(type, prev.length)])
     setActiveModeIndex(modes.length)
+    setShowAddMenu(false)
   }
 
   function removeMode(index: number) {
@@ -95,13 +108,17 @@ export default function App() {
 
   const activeMode = modes[activeModeIndex]
   const { online, activeMode: deviceActiveMode } = deviceStatus
+  const isDeviceOnMode = online === true && deviceActiveMode === activeModeIndex
 
   let deviceModeLabel = 'unknown'
   if (online === false) deviceModeLabel = 'offline'
   else if (online === true) {
     if (deviceActiveMode === null || deviceActiveMode === undefined) deviceModeLabel = 'online'
     else if (deviceActiveMode < 0) deviceModeLabel = 'off'
-    else deviceModeLabel = modes[deviceActiveMode]?.name ?? `Mode ${deviceActiveMode + 1}`
+    else {
+      const m = modes[deviceActiveMode]
+      deviceModeLabel = m ? `${m.name} (${modeTypeShort(m.type)})` : `Mode ${deviceActiveMode + 1}`
+    }
   }
 
   if (!authed) {
@@ -129,24 +146,61 @@ export default function App() {
         </div>
       </header>
 
-      <div className="mode-tabs">
-        {modes.map((mode, i) => (
-          <button
-            key={i}
-            className={`mode-tab ${i === activeModeIndex ? 'active' : ''}`}
-            onClick={() => setActiveModeIndex(i)}
-          >
-            {mode.name || `Mode ${i + 1}`}
-          </button>
-        ))}
-        {modes.length < MAX_MODES && (
-          <button className="mode-tab add" onClick={addMode}>+</button>
-        )}
-      </div>
+      <section className="mode-tabs-section">
+        <div className="mode-tabs">
+          {modes.map((mode, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`mode-tab ${i === activeModeIndex ? 'active' : ''} ${deviceActiveMode === i ? 'live' : ''}`}
+              onClick={() => setActiveModeIndex(i)}
+            >
+              <LedStrip mode={mode} compact />
+              <span className="mode-tab-label">
+                {mode.name || `Mode ${i + 1}`}
+                <span className="mode-tab-type">{modeTypeShort(mode.type)}</span>
+              </span>
+            </button>
+          ))}
+          {modes.length < MAX_MODES && (
+            <div className="add-mode">
+              <button type="button" className="mode-tab add" onClick={() => setShowAddMenu(v => !v)}>+</button>
+              {showAddMenu && (
+                <div className="add-menu">
+                  {(Object.keys(MODE_TYPE_LABELS) as ModeType[]).map(type => (
+                    <button key={type} type="button" onClick={() => addMode(type)}>
+                      {MODE_TYPE_LABELS[type]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
 
-      <div className="mode-editor">
+      <section className="strip-section">
+        <div className="strip-header">
+          <h2>{activeMode.name || `Mode ${activeModeIndex + 1}`}</h2>
+          {isDeviceOnMode && <span className="live-badge">Live on lamp</span>}
+        </div>
+        <LedStrip
+          mode={activeMode}
+          editable={activeMode.type === 'static'}
+          onPaintStart={() => { isPainting.current = true }}
+          onPaintEnd={() => { isPainting.current = false }}
+          onPaint={i => paintLed(i)}
+        />
+      </section>
+
+      <section className="mode-editor">
+        <ModeTypeSelector
+          mode={activeMode}
+          onTypeChange={type => updateMode(mode => changeModeType(mode, type))}
+        />
+
         <div className="mode-meta">
-          <label>
+          <label className="field-row">
             Name
             <input
               type="text"
@@ -154,7 +208,7 @@ export default function App() {
               onChange={e => updateMode(mode => ({ ...mode, name: e.target.value }))}
             />
           </label>
-          <label>
+          <label className="field-row">
             Brightness
             <input
               type="range"
@@ -163,61 +217,47 @@ export default function App() {
               value={activeMode.brightness}
               onChange={e => updateMode(mode => ({ ...mode, brightness: +e.target.value }))}
             />
-            <span>{activeMode.brightness}</span>
+            <span className="range-value">{activeMode.brightness}</span>
           </label>
           {modes.length > 1 && (
-            <button className="danger" onClick={() => removeMode(activeModeIndex)}>Remove mode</button>
+            <button type="button" className="danger" onClick={() => removeMode(activeModeIndex)}>
+              Remove mode
+            </button>
           )}
         </div>
 
-        <div className="paint-tool">
-          <div className="paint-tool-header">
-            <span className="brush-swatch" style={{ background: brushColor }} />
-            <span>Brush color</span>
-          </div>
-          <HexColorPicker color={brushColor} onChange={setBrushColor} />
-        </div>
-
-        <div
-          className="grid"
-          onPointerLeave={() => { isPainting.current = false }}
-        >
-          {activeMode.leds.map((led, i) => (
-            <div
-              key={i}
-              className="cell"
-              style={{ background: rgbToHex(led) }}
-              onPointerDown={e => {
-                e.preventDefault()
-                isPainting.current = true
-                paintLed(i)
-              }}
-              onPointerEnter={() => {
-                if (isPainting.current) paintLed(i)
-              }}
-            >
-              <span>{i + 1}</span>
-            </div>
-          ))}
-        </div>
+        <ModeTypeEditor
+          mode={activeMode}
+          brushColor={brushColor}
+          onBrushColorChange={setBrushColor}
+          onUpdate={updateMode}
+          onTypeChange={type => updateMode(mode => changeModeType(mode, type))}
+        />
 
         <div className="controls">
-          <div className="bulk">
-            <button onClick={fillAll}>Fill all</button>
-            <button onClick={clearAll}>Clear all</button>
-          </div>
-
+          {activeMode.type === 'static' && (
+            <div className="bulk">
+              <button type="button" onClick={fillAll}>Fill all</button>
+              <button type="button" onClick={clearAll}>Clear all</button>
+            </div>
+          )}
           <button
+            type="button"
             className="apply"
             disabled={status !== 'connected'}
-            onClick={() => publish(modes)}
+            onClick={() => {
+              publish(modes)
+              skipDirty.current = true
+              setDirty(false)
+            }}
           >
-            Apply all modes
+            {dirty ? 'Apply all modes (unsaved to lamp)' : 'Apply all modes'}
           </button>
+          {dirty && status === 'connected' && (
+            <p className="save-hint">Changes saved in this browser. Click Apply to send them to the lamp.</p>
+          )}
         </div>
-      </div>
-
-      <p className="hint">Pick a brush color, then click or drag across LEDs to paint</p>
+      </section>
     </div>
   )
 }
