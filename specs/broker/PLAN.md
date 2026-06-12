@@ -41,7 +41,7 @@ topic write wandlampe/status
 
 # wandlampe_web — browser UI (direct WSS)
 user wandlampe_web
-topic write wandlampe/config
+topic readwrite wandlampe/config
 topic read wandlampe/status
 ```
 

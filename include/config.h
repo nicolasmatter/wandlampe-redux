@@ -18,3 +18,7 @@
 #define MQTT_BUFFER_SIZE           4096
 #define MQTT_RECONNECT_INTERVAL_MS 600000UL
 #define STATUS_PULSE_PERIOD_MS     2000
+#define ALARM_MAX_RING_MS          600000UL  // 10 minutes
+
+#define NTP_SERVER "pool.ntp.org"
+#define TZ_INFO    "CET-1CEST,M3.5.0,M10.5.0/3"  // Europe/Zurich
