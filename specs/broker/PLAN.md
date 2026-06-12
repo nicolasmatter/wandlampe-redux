@@ -15,7 +15,7 @@ The wandlampe web UI will also connect directly to Mosquitto WSS on port 9001, u
 
 ---
 
-## Phase 1 — New MQTT users
+## Phase 1 — New MQTT users ✓
 
 Add two new users via `mosquitto_passwd`:
 
@@ -29,26 +29,26 @@ sudo mosquitto_passwd /etc/mosquitto/passwd wandlampe_device
 sudo mosquitto_passwd /etc/mosquitto/passwd wandlampe_web
 ```
 
-## Phase 2 — ACL rules
+## Phase 2 — ACL rules ✓
 
 Add entries to the Mosquitto ACL file (e.g. `/etc/mosquitto/acl`):
 
 ```
 # wandlampe_device — ESP32 firmware
 user wandlampe_device
-topic subscribe wandlampe/config
+topic read wandlampe/config
 topic write wandlampe/status
 
 # wandlampe_web — browser UI (direct WSS)
 user wandlampe_web
 topic write wandlampe/config
-topic subscribe wandlampe/status
+topic read wandlampe/status
 ```
 
 > If no ACL file is configured yet, add `acl_file /etc/mosquitto/acl` to `mosquitto.conf`.
 > Existing users (`pi_user`, `web_user`) need their own ACL entries if not already present.
 
-## Phase 3 — Reload and verify
+## Phase 3 — Reload and verify ✓
 
 ```bash
 sudo systemctl reload mosquitto
