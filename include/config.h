@@ -2,7 +2,7 @@
 
 #define LED_PIN      6
 #define SWITCH_PIN   4
-#define NUM_LEDS     24
+#define NUM_LEDS     46
 #define BRIGHTNESS   128
 #define DEBOUNCE_MS  50
 

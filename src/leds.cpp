@@ -202,12 +202,22 @@ void ledsSetup() {
 }
 
 void ledsApplyConfig(const ModesConfig& cfg) {
+  int previousMode = activeMode;
   modesConfig = cfg;
   if (modesConfig.numModes > MAX_MODES) modesConfig.numModes = MAX_MODES;
-  cycleIndex = 0;
   alarmRinging = false;
   alarmDismissedYday = -1;
-  setActiveMode(-1);
+
+  // Keep showing whatever mode was already active (now with its updated
+  // definition) instead of always blanking on every config push, so pushing
+  // a new color doesn't require the physical switch to turn back on.
+  if (previousMode >= 0 && (uint8_t)previousMode < modesConfig.numModes) {
+    activeMode = previousMode;
+    cycleIndex = previousMode * 2 + 1;
+  } else {
+    cycleIndex = 0;
+    setActiveMode(-1);
+  }
   saveConfig();
 }
 
