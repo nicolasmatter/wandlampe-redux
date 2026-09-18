@@ -29,7 +29,26 @@ npm run build
 npm run lint
 ```
 
-For Vercel, point the project at this repository and set **Root Directory** to `web`, with the Vite preset, build command `npm run build`, and output directory `dist`. Firmware builds and web deployments remain independent.
+## Web deployment (Vercel)
+
+Configure the existing Vercel project as follows:
+
+1. In **Settings → Git**, connect `nicolasmatter/wandlampe-redux` instead of the old `wandlampe-web` repository.
+2. In **Settings → Build and Deployment → Root Directory**, click **Edit**, enter `web` (without a leading slash), and save.
+3. In the build settings, use:
+
+   | Setting | Value |
+   | --- | --- |
+   | Framework Preset | Vite |
+   | Build Command | `npm run build` |
+   | Output Directory | `dist` |
+
+4. In **Settings → Environments → Production → Branch Tracking**, enter the branch that should publish the live site and save. Use `master` to deploy merges to master, or `production` if using a dedicated release branch. The environment name **Production** does not itself determine the Git branch.
+5. Deploy the latest commit from the selected branch. Root-directory changes apply to the next deployment.
+
+Pushes and merges to the tracked production branch trigger production deployments; other branches create preview deployments by default. The configured branch must be pushed to GitHub. Firmware builds and uploads remain separate from Vercel deployment.
+
+See Vercel's [monorepo configuration](https://vercel.com/docs/monorepos) and [Git deployment documentation](https://vercel.com/docs/git).
 
 ## Firmware development
 
