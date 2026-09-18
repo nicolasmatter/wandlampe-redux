@@ -1,0 +1,120 @@
+:root {
+  /* Core palette — 5 colors */
+  --color-bg: #4c4c4c;
+  --color-surface: #6b6b6b;
+  --color-text: #fefefe;
+  --color-accent: #4a9b46;
+  --color-danger: #e53935;
+
+  --color-overlay: color-mix(in srgb, var(--color-text) 33%, transparent);
+  --color-shadow: color-mix(in srgb, var(--color-bg) 10%, var(--color-surface));
+
+  /* Derived from the palette above */
+  --color-border: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-text) 35%, var(--color-bg)),
+    var(--color-shadow)
+  );
+  --color-text-muted: color-mix(
+    in srgb,
+    var(--color-text) 55%,
+    var(--color-bg)
+  );
+  --color-text-subtle: color-mix(
+    in srgb,
+    var(--color-text) 42%,
+    var(--color-bg)
+  );
+  --color-text-faint: color-mix(
+    in srgb,
+    var(--color-text) 30%,
+    var(--color-bg)
+  );
+
+  --color-surface-raised: color-mix(
+    in srgb,
+    var(--color-surface) 88%,
+    var(--color-text)
+  );
+  --color-surface-hover: color-mix(
+    in srgb,
+    var(--color-surface) 82%,
+    var(--color-text)
+  );
+  --color-surface-sunken: color-mix(
+    in srgb,
+    var(--color-surface) 70%,
+    var(--color-bg)
+  );
+  --color-surface-accent: color-mix(
+    in srgb,
+    var(--color-surface) 72%,
+    var(--color-accent)
+  );
+
+  --color-accent-muted: color-mix(
+    in srgb,
+    var(--color-accent) 50%,
+    transparent
+  );
+  --color-accent-strong: color-mix(
+    in srgb,
+    var(--color-accent) 75%,
+    var(--color-surface)
+  );
+  --color-accent-text: color-mix(
+    in srgb,
+    var(--color-accent) 55%,
+    var(--color-text)
+  );
+
+  --color-danger-surface: color-mix(
+    in srgb,
+    var(--color-danger) 35%,
+    var(--color-surface)
+  );
+  --color-danger-border: color-mix(
+    in srgb,
+    var(--color-danger) 55%,
+    var(--color-surface)
+  );
+  --color-danger-hover: color-mix(
+    in srgb,
+    var(--color-danger) 45%,
+    var(--color-surface)
+  );
+
+  --color-warning: color-mix(
+    in srgb,
+    var(--color-accent) 40%,
+    var(--color-danger)
+  );
+
+  /* Border radius */
+  --border-radius: 18px;
+  --border-radius-full: 50%;
+
+  /* Shadows */
+  --color-shadow-hover: color-mix(
+    in srgb,
+    var(--color-shadow) 85%,
+    var(--color-text)
+  );
+  --shadow: 0 8px 24px var(--color-shadow);
+  --shadow-hover: 0 8px 28px var(--color-shadow-hover);
+
+  /* Motion */
+  --transition-duration: 1312ms;
+  --transition-ease: ease;
+
+  /* Grid */
+  --grid-columns: 12;
+  --grid-gap: 0.5rem;
+  --grid-gap-sm: calc(var(--grid-gap) * 0.5);
+  --row-gap: calc(var(--grid-gap) * 2.5);
+  --grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+
+  /* Typography */
+  --font-body: "Domine", serif;
+  --font-heading: "Sorts Mill Goudy", serif;
+}

@@ -1,0 +1,42 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 1.4rem;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--border-radius-full);
+  background: var(--color-text-faint);
+}
+
+.dot.connected {
+  background: var(--color-accent);
+}
+
+.dot.connecting {
+  background: var(--color-warning);
+}
+
+.dot.disconnected {
+  background: var(--color-danger);
+}

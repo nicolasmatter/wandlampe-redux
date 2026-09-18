@@ -1,0 +1,67 @@
+.strip-section {
+  padding-block: 2rem;
+  border-radius: var(--border-radius);
+}
+
+.live-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--border-radius);
+  background: var(--color-accent-strong);
+  color: var(--color-accent-text);
+  border: 1px solid var(--color-accent);
+}
+
+.led-strip {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(24px, 1fr));
+  gap: 4px;
+  touch-action: none;
+  user-select: none;
+  overflow-x: auto;
+}
+
+.led-strip.compact {
+  grid-template-columns: repeat(24, 4px);
+  gap: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.led-cell {
+  aspect-ratio: 1;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: border-color 0.1s;
+  min-width: 24px;
+}
+
+.led-strip.compact .led-cell {
+  aspect-ratio: unset;
+  height: 14px;
+  min-width: 0;
+  border-radius: var(--border-radius);
+  border: none;
+}
+
+.led-strip.editable .led-cell {
+  box-shadow: var(--shadow);
+}
+
+.led-strip.editable .led-cell:hover {
+  border-color: var(--color-overlay);
+}
+
+.led-strip.preview .led-cell {
+  cursor: default;
+}
+
+.led-cell span {
+  font-size: 0.55rem;
+  color: var(--color-overlay);
+  mix-blend-mode: difference;
+  pointer-events: none;
+}

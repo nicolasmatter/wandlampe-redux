@@ -1,0 +1,7 @@
+{
+  "folders": [
+    { "name": "Firmware", "path": "firmware" },
+    { "name": "Web controller", "path": "web" },
+    { "name": "Documentation", "path": "." }
+  ]
+}

@@ -1,0 +1,49 @@
+:is(
+  button:not(:disabled),
+  .login input,
+  .login button,
+  .field-row input[type=text],
+  .field-row input[type=time],
+  .field-row input[type="range"],
+  .field-row select,
+  .led-strip.editable .led-cell,
+  .color-picker-block .react-colorful
+) {
+  cursor: pointer;
+  transition: box-shadow var(--transition-duration) var(--transition-ease);
+}
+
+:is(
+  button:not(:disabled):hover,
+  .login input:hover,
+  .login button:hover,
+  .field-row input[type=text]:hover,
+  .field-row input[type=time]:hover,
+  .field-row select:hover,
+  .led-strip.editable .led-cell:hover,
+  .color-picker-block .react-colorful:hover
+) {
+  box-shadow: var(--shadow-hover);
+}
+
+.field-row input[type=range]::-webkit-slider-thumb {
+  cursor: pointer;
+  transition: box-shadow var(--transition-duration) var(--transition-ease);
+}
+
+.field-row input[type=range]:hover::-webkit-slider-thumb {
+  box-shadow: var(--shadow-hover);
+}
+
+.field-row input[type=range]::-moz-range-thumb {
+  cursor: pointer;
+  transition: box-shadow var(--transition-duration) var(--transition-ease);
+}
+
+.field-row input[type=range]:hover::-moz-range-thumb {
+  box-shadow: var(--shadow-hover);
+}
+
+.add-menu button:hover {
+  box-shadow: none;
+}

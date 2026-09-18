@@ -1,0 +1,12 @@
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+h1,
+h2 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-style: normal;
+}

@@ -1,0 +1,42 @@
+button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-surface-hover), var(--color-surface-hover)) padding-box,
+    var(--color-border) border-box;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  box-shadow: var(--shadow);
+}
+
+button:hover:not(:disabled) {
+  background:
+    linear-gradient(var(--color-surface-raised), var(--color-surface-raised)) padding-box,
+    var(--color-border) border-box;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.danger {
+  background: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
+}
+
+button.danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+}
+
+button.apply {
+  background: var(--color-accent-strong);
+  border: 1px solid var(--color-accent);
+  font-size: 1rem;
+  padding: 0.75rem;
+}
+
+button.apply:hover:not(:disabled) {
+  background: var(--color-surface-accent);
+}
