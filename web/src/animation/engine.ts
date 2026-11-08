@@ -1,4 +1,5 @@
 import type { RGB } from '../types'
+import { renderGenerator } from './generators'
 import type { Animation, Layer } from './types'
 
 const BLACK: RGB = { r: 0, g: 0, b: 0 }
@@ -9,12 +10,6 @@ function layerPhase(timeMs: number, loopMs: number, layer: Layer): number {
   return p < 0 ? p + 1 : p
 }
 
-function renderLayer(layer: Layer, _phase: number, ledCount: number): RGB[] {
-  switch (layer.generator) {
-    case 'solid':
-      return Array.from({ length: ledCount }, () => layer.params.color)
-  }
-}
 
 function blend(base: RGB, top: RGB, layer: Layer): RGB {
   const a = layer.opacity
@@ -33,7 +28,7 @@ export function render(animation: Animation, timeMs: number, ledCount: number): 
   let out: RGB[] = Array.from({ length: ledCount }, () => BLACK)
   for (const layer of animation.layers) {
     if (layer.hidden || layer.opacity <= 0) continue
-    const colors = renderLayer(layer, layerPhase(timeMs, animation.loopMs, layer), ledCount)
+    const colors = renderGenerator(layer, layerPhase(timeMs, animation.loopMs, layer), ledCount)
     out = out.map((base, i) => blend(base, colors[i], layer))
   }
   return out.map(round)

@@ -88,3 +88,36 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+.lab-layer-editor,
+.lab-color-list,
+.lab-color-field {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.lab-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.lab-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.lab-swatch {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: var(--border-radius-full);
+  border: 2px solid transparent;
+}
+
+.lab-swatch.selected {
+  border-color: var(--color-text);
+}

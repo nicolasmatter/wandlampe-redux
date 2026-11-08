@@ -61,9 +61,9 @@ A generator picker on the layer, with parameter editors for `bands` (2–8 color
 
 ### Acceptance criteria
 
-- [ ] A rainbow, a wave and hard stripes can each be built with `bands`
-- [ ] Breathe-like and sharp pulses can be built with `pulse`
-- [ ] Tests cover count independence for `bands`, and the loop and min/max properties for `pulse`
+- [x] A rainbow, a wave and hard stripes can each be built with `bands`
+- [x] Breathe-like and sharp pulses can be built with `pulse`
+- [x] Tests cover count independence for `bands`, and the loop and min/max properties for `pulse`
 
 ---
 

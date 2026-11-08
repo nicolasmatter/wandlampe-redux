@@ -1,5 +1,12 @@
 import type { RGB } from '../types'
-import { ANIMATION_FORMAT_VERSION, MAX_LAYERS, type Animation, type Layer } from './types'
+import {
+  ANIMATION_FORMAT_VERSION,
+  MAX_BAND_COLORS,
+  MAX_LAYERS,
+  MIN_BAND_COLORS,
+  type Animation,
+  type Layer,
+} from './types'
 
 export type ParseResult = { ok: true; animation: Animation } | { ok: false; errors: string[] }
 
@@ -14,6 +21,33 @@ function checkColor(v: unknown, path: string, errors: string[]): v is RGB {
   return false
 }
 
+const isIntIn = (v: unknown, min: number, max: number) =>
+  Number.isInteger(v) && (v as number) >= min && (v as number) <= max
+
+type ParamCheck = (p: Record<string, unknown>, path: string, errors: string[]) => void
+
+const PARAM_CHECKS: Record<string, ParamCheck> = {
+  solid: (p, path, errors) => {
+    checkColor(p.color, `${path}.color`, errors)
+  },
+  bands: (p, path, errors) => {
+    if (!Array.isArray(p.colors) || p.colors.length < MIN_BAND_COLORS || p.colors.length > MAX_BAND_COLORS) {
+      errors.push(`${path}.colors must hold ${MIN_BAND_COLORS}–${MAX_BAND_COLORS} colors`)
+    } else {
+      p.colors.forEach((c, i) => checkColor(c, `${path}.colors[${i}]`, errors))
+    }
+    if (p.edge !== 'smooth' && p.edge !== 'hard') errors.push(`${path}.edge must be "smooth" or "hard"`)
+    if (!isIntIn(p.repeat, 1, 16)) errors.push(`${path}.repeat must be an integer 1–16`)
+    if (![-1, 0, 1].includes(p.scroll as number)) errors.push(`${path}.scroll must be -1, 0 or 1`)
+  },
+  pulse: (p, path, errors) => {
+    checkColor(p.color, `${path}.color`, errors)
+    if (!isIntIn(p.min, 0, 255)) errors.push(`${path}.min must be an integer 0–255`)
+    if (!isIntIn(p.max, 0, 255)) errors.push(`${path}.max must be an integer 0–255`)
+    if (p.curve !== 'sine' && p.curve !== 'sharp') errors.push(`${path}.curve must be "sine" or "sharp"`)
+  },
+}
+
 function parseLayer(v: unknown, path: string, errors: string[]): Layer | null {
   if (!isObject(v)) {
     errors.push(`${path} must be an object`)
@@ -24,12 +58,13 @@ function parseLayer(v: unknown, path: string, errors: string[]): Layer | null {
   if (typeof v.opacity !== 'number' || v.opacity < 0 || v.opacity > 1) errors.push(`${path}.opacity must be 0–1`)
   if (![0.5, 1, 2, 4].includes(v.speed as number)) errors.push(`${path}.speed must be 0.5, 1, 2 or 4`)
   if (typeof v.hidden !== 'boolean') errors.push(`${path}.hidden must be a boolean`)
-  if (v.generator !== 'solid') {
+  const check = PARAM_CHECKS[v.generator as string]
+  if (!check) {
     errors.push(`${path}.generator "${String(v.generator)}" is unknown`)
   } else if (!isObject(v.params)) {
     errors.push(`${path}.params must be an object`)
   } else {
-    checkColor(v.params.color, `${path}.params.color`, errors)
+    check(v.params, `${path}.params`, errors)
   }
   return errors.length === before ? (v as unknown as Layer) : null
 }

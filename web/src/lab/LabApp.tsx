@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { HexColorPicker } from 'react-colorful'
 import { LAB_DEFAULT_LED_COUNT } from '../config'
-import { hexToRgb, rgbToHex } from '../modeUtils'
 import type { Animation, Layer } from '../animation/types'
+import { LayerEditor } from './LayerEditor'
 import { LabStrip, type PreviewSettings } from './LabStrip'
 import { PreviewControls } from './PreviewControls'
 import { loadDraft, saveDraft } from './storage'
@@ -20,9 +19,8 @@ export function LabApp() {
 
   useEffect(() => saveDraft(animation), [animation])
 
-  const layer = animation.layers[0]
-  const updateLayer = (patch: Partial<Layer>) =>
-    setAnimation(a => ({ ...a, layers: a.layers.map((l, i) => (i === 0 ? { ...l, ...patch } : l)) }))
+  const updateLayer = (index: number, layer: Layer) =>
+    setAnimation(a => ({ ...a, layers: a.layers.map((l, i) => (i === index ? layer : l)) }))
 
   return (
     <main className="lab">
@@ -79,11 +77,8 @@ export function LabApp() {
       </section>
 
       <section className="lab-panel">
-        <h2>Layer 1 · solid</h2>
-        <HexColorPicker
-          color={rgbToHex(layer.params.color)}
-          onChange={hex => updateLayer({ params: { color: hexToRgb(hex) } })}
-        />
+        <h2>Layer 1</h2>
+        <LayerEditor layer={animation.layers[0]} onChange={layer => updateLayer(0, layer)} />
       </section>
     </main>
   )
