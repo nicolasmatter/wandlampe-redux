@@ -68,7 +68,7 @@ This PRD covers stage 1 only: the Lab and its animation engine. Firmware and pro
   - random generators add `seed` and `freeRunning`
   - `keyframes`: each has `at` (0–1 of the loop), `easing` (`linear` | `ease-in-out` | `step`), and `stops` (≥1 `{ position 0–1, color }`), with `edge` (`smooth` | `hard`)
   - All positions and widths are relative to the strip (0–1). Colors are 8-bit RGB.
-- **Seamless looping.** For any animation that isn't free-running, render at `t = 0` equals render at `t = loopMs`. Noise is sampled on a closed path so it wraps.
+- **Seamless looping.** For any animation that isn't free-running, render at `t = 0` equals render at the end of the cycle: `loopMs`, or `2 × loopMs` when a layer runs at ×½. Noise is sampled on a closed path so it wraps.
 - **Free-running layers** use the wall-clock time instead of loop time, and a non-fixed seed. The engine stays pure because time and seed are inputs.
 - **Dev-only save API.** A small Vite dev-server plugin lists, reads and writes `animations/*.json` at the repo root. The production build doesn't include it; the Lab detects its absence and falls back to download and upload.
 - **LED count** is a Lab setting, 46 by default, in shared config. Animation files never contain a count.
