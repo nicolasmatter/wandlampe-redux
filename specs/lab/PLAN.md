@@ -44,10 +44,10 @@ Preview controls: LED count (46 by default), brightness scaled like FastLED, gam
 
 ### Acceptance criteria
 
-- [ ] Changing the LED count re-renders without changing the animation
-- [ ] Brightness 0 shows black, and 255 shows the engine output gamma-corrected
-- [ ] Glow toggle blurs neighbouring LEDs visually
-- [ ] Scrubbing shows the exact frame for that time
+- [x] Changing the LED count re-renders without changing the animation
+- [x] Brightness 0 shows black, and 255 shows the engine output gamma-corrected
+- [x] Glow toggle blurs neighbouring LEDs visually
+- [x] Scrubbing shows the exact frame for that time
 
 ---
 

@@ -3,12 +3,20 @@ import { HexColorPicker } from 'react-colorful'
 import { LAB_DEFAULT_LED_COUNT } from '../config'
 import { hexToRgb, rgbToHex } from '../modeUtils'
 import type { Animation, Layer } from '../animation/types'
-import { LabStrip } from './LabStrip'
+import { LabStrip, type PreviewSettings } from './LabStrip'
+import { PreviewControls } from './PreviewControls'
 import { loadDraft, saveDraft } from './storage'
+import { usePlayback } from './usePlayback'
 
 export function LabApp() {
   const [animation, setAnimation] = useState<Animation>(loadDraft)
-  const [playing, setPlaying] = useState(true)
+  const [preview, setPreview] = useState<PreviewSettings>({
+    ledCount: LAB_DEFAULT_LED_COUNT,
+    brightness: 255,
+    gamma: true,
+    glow: true,
+  })
+  const { playing, setPlaying, timeMs, seek } = usePlayback(animation.loopMs)
 
   useEffect(() => saveDraft(animation), [animation])
 
@@ -24,12 +32,29 @@ export function LabApp() {
       </header>
 
       <section className="lab-preview">
-        <LabStrip animation={animation} ledCount={LAB_DEFAULT_LED_COUNT} playing={playing} />
+        <LabStrip animation={animation} timeMs={timeMs} settings={preview} />
         <div className="lab-transport">
           <button type="button" onClick={() => setPlaying(p => !p)}>
             {playing ? 'Pause' : 'Play'}
           </button>
+          <input
+            className="lab-scrubber"
+            type="range"
+            min={0}
+            max={animation.loopMs}
+            step={1}
+            value={timeMs}
+            aria-label="Position in loop"
+            onChange={e => {
+              setPlaying(false)
+              seek(Number(e.target.value))
+            }}
+          />
+          <span className="lab-time">
+            {(timeMs / 1000).toFixed(2)} / {(animation.loopMs / 1000).toFixed(2)} s
+          </span>
         </div>
+        <PreviewControls settings={preview} onChange={patch => setPreview(p => ({ ...p, ...patch }))} />
       </section>
 
       <section className="lab-panel">

@@ -57,3 +57,34 @@
   align-items: center;
   gap: 1rem;
 }
+
+.lab-strip.glow .lab-led {
+  box-shadow: 0 0 10px 3px currentColor;
+}
+
+.lab-transport,
+.lab-preview-controls {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lab-preview-controls {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.lab-scrubber {
+  flex: 1;
+}
+
+.lab-time {
+  font-variant-numeric: tabular-nums;
+  min-width: 8rem;
+  text-align: right;
+}
+
+.lab-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
