@@ -1,7 +1,7 @@
 import type { RGB } from '../types'
 
 export const ANIMATION_FORMAT_VERSION = 1
-export const MAX_LAYERS = 4
+export const MAX_LAYERS = 6
 export const MIN_PALETTE_COLORS = 2
 export const MAX_PALETTE_COLORS = 8
 export const MAX_KEYFRAMES = 16

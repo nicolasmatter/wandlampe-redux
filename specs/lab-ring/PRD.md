@@ -35,7 +35,7 @@ Treat every animation as a ring. Preview it as the lamp looks on the wall. Add p
 - **`drops`:** color, rate (an integer number of drops per cycle), speed (ring lengths per cycle), speed variation, length. Drops fall toward position 0.
 - **`ripple`:** color, rate (an integer number of ripples per cycle), speed, width, lifetime (in cycles).
 - **Preview.** A canvas ring with an outward-only halo replaces the glow toggle. The unrolled strip stays below it.
-- **Layer limit** is four (previously three), so each half can hold two layers.
+- **Layer limit** is six (previously three), so each half can hold several layers.
 - **Format** stays at version 1. `mirror` is required on every layer. `noise` gains `contrast`. Committed animations are updated.
 
 ## Testing Decisions
@@ -54,4 +54,4 @@ Treat every animation as a ring. Preview it as the lamp looks on the wall. Add p
 
 ## Open Questions
 
-- Resolved: the layer limit is raised from three to four, so each half can hold two layers.
+- Resolved: the layer limit is raised from three to six, so each half can hold several layers.

@@ -1,6 +1,6 @@
 # Animations are declarative layered generators, not code or frames
 
-Animations are described as data: a shared loop, up to four layers (raised from three so the ring's halves can each hold two) (`normal`/`add` blending with opacity), and each layer is either a parameterised generator (`solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`) or a sequence of color-stop keyframes with `linear`/`ease-in-out`/`step` easing. This keeps a mode's animation small enough for MQTT and NVS, independent of LED count, and reproducible identically by the browser preview and the firmware, so new animations eventually need no firmware flash.
+Animations are described as data: a shared loop, up to six layers (raised from three so the ring's halves can each hold several) (`normal`/`add` blending with opacity), and each layer is either a parameterised generator (`solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`) or a sequence of color-stop keyframes with `linear`/`ease-in-out`/`step` easing. This keeps a mode's animation small enough for MQTT and NVS, independent of LED count, and reproducible identically by the browser preview and the firmware, so new animations eventually need no firmware flash.
 
 ## Considered Options
 
