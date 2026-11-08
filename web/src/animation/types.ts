@@ -59,8 +59,51 @@ export type SparkleParams = {
 /** Smooth random field mapped onto a palette, from the first color (low) to the last (high). */
 export type NoiseParams = {
   colors: RGB[]
-  /** Feature count across the strip, 1–16. */
+  /** Whole number of features around the ring, 1–16, so the field tiles without a seam. */
   scale: number
+  /** Stretches values away from the middle, 0.5–8. High values give crisp lines. */
+  contrast: number
+}
+
+/** Lightning: mostly dark, with random strikes that flicker and leave an afterglow. */
+export type StrikeParams = {
+  color: RGB
+  /** Expected strikes per layer cycle, 0–8. */
+  rate: number
+  /** Most flashes per strike, 1–4. */
+  flickers: number
+  /** Lit arc around the strike center, 0.02–1 (1 lights everything). */
+  width: number
+  /** How long the glow lingers after the last flash, 0–3000 ms. */
+  afterglowMs: number
+  /** Where strikes hit: anywhere, or the top (with mirror, the top of both sides). */
+  origin: 'random' | 'top'
+}
+
+/** Particles that fall toward position 0, each with a fading tail behind it. */
+export type DropsParams = {
+  color: RGB
+  /** Drops per layer cycle, an integer 1–40. */
+  rate: number
+  /** Positions travelled per layer cycle, 0.2–8. */
+  speed: number
+  /** Random slow-down per drop, 0–0.9. */
+  variation: number
+  /** Tail length, 0–0.5. */
+  length: number
+}
+
+/** Waves that spread both ways from random spots and fade. */
+export type RippleParams = {
+  color: RGB
+  /** Ripples per layer cycle, an integer 1–16. */
+  rate: number
+  /** Positions a wave travels per layer cycle, 0.1–4. */
+  speed: number
+  /** Wave thickness, 0.01–0.3. */
+  width: number
+  /** How long a ripple lasts, in layer cycles, 0.05–2. */
+  life: number
 }
 
 export type GeneratorParams = {
@@ -70,20 +113,32 @@ export type GeneratorParams = {
   chase: ChaseParams
   sparkle: SparkleParams
   noise: NoiseParams
+  strike: StrikeParams
+  drops: DropsParams
+  ripple: RippleParams
 }
 
 export type GeneratorName = keyof GeneratorParams
-export const RANDOM_GENERATORS = ['sparkle', 'noise'] as const
+export const RANDOM_GENERATORS = ['sparkle', 'noise', 'strike', 'drops', 'ripple'] as const
 export type RandomGeneratorName = (typeof RANDOM_GENERATORS)[number]
 
 export const isRandomGenerator = (g: GeneratorName): g is RandomGeneratorName =>
   (RANDOM_GENERATORS as readonly string[]).includes(g)
+
+/**
+ * The arc from `from` counterclockwise to `to`. Outside it the layer is hidden;
+ * `softness` (0–0.5) fades it in from the edges. from === to covers the whole ring.
+ */
+export type Region = { from: number; to: number; softness: number }
 
 export type LayerBase = {
   blend: Blend
   opacity: number
   speed: Speed
   hidden: boolean
+  /** Draw along bottom (0) → top (1) and show it identically on both sides of the ring. */
+  mirror: boolean
+  region?: Region
 }
 
 /** Random layers repeat exactly per cycle for a given seed, unless free-running. */

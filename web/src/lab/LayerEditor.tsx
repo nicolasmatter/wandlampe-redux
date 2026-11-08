@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { GENERATOR_LABELS, randomSeed, withContent } from '../animation/defaults'
+import { GENERATOR_LABELS, randomSeed, REGION_PRESETS, withContent } from '../animation/defaults'
 import {
   isKeyframeLayer,
   isRandomGenerator,
@@ -10,6 +10,7 @@ import {
   type GeneratorLayer,
   type GeneratorName,
   type Layer,
+  type Region,
   type Speed,
 } from '../animation/types'
 import { ColorField } from './ColorField'
@@ -63,12 +64,90 @@ export function LayerEditor({ layer, phase, onChange }: Props) {
         </label>
       </div>
 
+      <Params>
+        <label className="lab-inline">
+          <input type="checkbox" checked={layer.mirror} onChange={e => onChange({ ...layer, mirror: e.target.checked })} />
+          <span>Mirror (bottom → top on both sides)</span>
+        </label>
+        <RegionEditor region={layer.region} onChange={region => onChange(withRegion(layer, region))} />
+      </Params>
+
       {isKeyframeLayer(layer) ? (
-        <KeyframeEditor keyframes={layer.keyframes} phase={phase} onChange={keyframes => onChange({ ...layer, keyframes })} />
+        <KeyframeEditor
+          keyframes={layer.keyframes}
+          phase={phase}
+          wrap={!layer.mirror}
+          onChange={keyframes => onChange({ ...layer, keyframes })}
+        />
       ) : (
         <GeneratorEditor layer={layer} onChange={onChange} />
       )}
     </div>
+  )
+}
+
+function withRegion(layer: Layer, region: Region | undefined): Layer {
+  const next = { ...layer }
+  if (region) next.region = region
+  else delete next.region
+  return next
+}
+
+type PresetName = keyof typeof REGION_PRESETS | 'custom'
+
+const PRESET_LABELS: Record<PresetName, string> = {
+  whole: 'Whole ring',
+  top: 'Top half',
+  bottom: 'Bottom half',
+  right: 'Right half',
+  left: 'Left half',
+  custom: 'Custom arc',
+}
+
+function presetOf(region: Region | undefined): PresetName {
+  if (!region) return 'whole'
+  const hit = (Object.keys(REGION_PRESETS) as (keyof typeof REGION_PRESETS)[]).find(
+    k => k !== 'whole' && REGION_PRESETS[k].from === region.from && REGION_PRESETS[k].to === region.to,
+  )
+  return hit ?? 'custom'
+}
+
+/** Limits a layer to an arc of the ring. Positions: 0 bottom, 0.25 right, 0.5 top, 0.75 left. */
+function RegionEditor({ region, onChange }: { region: Region | undefined; onChange: (r: Region | undefined) => void }) {
+  const preset = presetOf(region)
+  const softness = region?.softness ?? 0
+  const pct = (v: number) => `${Math.round(v * 100)}%`
+  return (
+    <>
+      <label className="lab-inline">
+        <span>Region</span>
+        <select
+          value={preset}
+          onChange={e => {
+            const name = e.target.value as PresetName
+            if (name === 'whole') return onChange(undefined)
+            const arc = name === 'custom' ? { from: 0.1, to: 0.4 } : REGION_PRESETS[name]
+            onChange({ ...arc, softness })
+          }}
+        >
+          {(Object.keys(PRESET_LABELS) as PresetName[]).map(k => (
+            <option key={k} value={k}>
+              {PRESET_LABELS[k]}
+            </option>
+          ))}
+        </select>
+      </label>
+      {region && preset === 'custom' && (
+        <>
+          <Slider label="From" value={region.from} min={0} max={1} step={0.01} format={pct} onChange={from => onChange({ ...region, from })} />
+          <Slider label="To" value={region.to} min={0} max={1} step={0.01} format={pct} onChange={to => onChange({ ...region, to })} />
+        </>
+      )}
+      {region && (
+        <Slider label="Soft edge" value={softness} min={0} max={0.25} step={0.01} format={pct}
+          onChange={s => onChange({ ...region, softness: s })} />
+      )}
+    </>
   )
 }
 
@@ -209,7 +288,67 @@ function GeneratorEditor({ layer, onChange }: { layer: GeneratorLayer; onChange:
         <>
           <ColorList colors={p.colors} min={MIN_PALETTE_COLORS} max={MAX_PALETTE_COLORS} onChange={colors => set({ ...p, colors })} />
           <Params>
-            <Slider label="Scale" value={p.scale} min={1} max={16} step={0.5} onChange={scale => set({ ...p, scale })} />
+            <Slider label="Scale" value={p.scale} min={1} max={16} onChange={scale => set({ ...p, scale })} />
+            <Slider label="Contrast" value={p.contrast} min={0.5} max={8} step={0.1} format={v => v.toFixed(1)}
+              onChange={contrast => set({ ...p, contrast })} />
+          </Params>
+          {random}
+        </>
+      )
+    }
+
+    case 'strike': {
+      const p = layer.params
+      return (
+        <>
+          <ColorField label="Color" color={p.color} onChange={color => set({ ...p, color })} />
+          <Params>
+            <Slider label="Strikes per cycle" value={p.rate} min={0} max={8} step={0.1} format={v => v.toFixed(1)}
+              onChange={rate => set({ ...p, rate })} />
+            <Slider label="Flickers" value={p.flickers} min={1} max={4} onChange={flickers => set({ ...p, flickers })} />
+            <Slider label="Width" value={p.width} min={0.02} max={1} step={0.01} format={v => `${Math.round(v * 100)}%`}
+              onChange={width => set({ ...p, width })} />
+            <Slider label="Afterglow" value={p.afterglowMs} min={0} max={3000} step={50} format={v => `${v} ms`}
+              onChange={afterglowMs => set({ ...p, afterglowMs })} />
+            <Choice label="Hits" value={p.origin} options={[['random', 'Anywhere'], ['top', 'At the top']]}
+              onChange={origin => set({ ...p, origin })} />
+          </Params>
+          {random}
+        </>
+      )
+    }
+
+    case 'drops': {
+      const p = layer.params
+      return (
+        <>
+          <ColorField label="Color" color={p.color} onChange={color => set({ ...p, color })} />
+          <Params>
+            <Slider label="Drops per cycle" value={p.rate} min={1} max={40} onChange={rate => set({ ...p, rate })} />
+            <Slider label="Speed" value={p.speed} min={0.2} max={8} step={0.1} format={v => v.toFixed(1)} onChange={speed => set({ ...p, speed })} />
+            <Slider label="Variation" value={p.variation} min={0} max={0.9} step={0.05} format={v => `${Math.round(v * 100)}%`}
+              onChange={variation => set({ ...p, variation })} />
+            <Slider label="Tail" value={p.length} min={0} max={0.5} step={0.01} format={v => `${Math.round(v * 100)}%`}
+              onChange={length => set({ ...p, length })} />
+          </Params>
+          <p className="lab-hint">Drops fall toward the bottom. Turn on Mirror to have them run down both sides.</p>
+          {random}
+        </>
+      )
+    }
+
+    case 'ripple': {
+      const p = layer.params
+      return (
+        <>
+          <ColorField label="Color" color={p.color} onChange={color => set({ ...p, color })} />
+          <Params>
+            <Slider label="Ripples per cycle" value={p.rate} min={1} max={16} onChange={rate => set({ ...p, rate })} />
+            <Slider label="Speed" value={p.speed} min={0.1} max={4} step={0.05} format={v => v.toFixed(2)} onChange={speed => set({ ...p, speed })} />
+            <Slider label="Width" value={p.width} min={0.01} max={0.3} step={0.01} format={v => `${Math.round(v * 100)}%`}
+              onChange={width => set({ ...p, width })} />
+            <Slider label="Life" value={p.life} min={0.05} max={2} step={0.05} format={v => `${v.toFixed(2)} cycles`}
+              onChange={life => set({ ...p, life })} />
           </Params>
           {random}
         </>

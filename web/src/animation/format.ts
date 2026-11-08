@@ -71,8 +71,38 @@ const PARAM_CHECKS: Record<string, (p: Obj, path: string, errors: Errors) => voi
   },
   noise: (p, path, e) => {
     checkPalette(p.colors, `${path}.colors`, e)
-    checkRange(p.scale, 1, 16, `${path}.scale`, e)
+    checkRange(p.scale, 1, 16, `${path}.scale`, e, true)
+    checkRange(p.contrast, 0.5, 8, `${path}.contrast`, e)
   },
+  strike: (p, path, e) => {
+    checkColor(p.color, `${path}.color`, e)
+    checkRange(p.rate, 0, 8, `${path}.rate`, e)
+    checkRange(p.flickers, 1, 4, `${path}.flickers`, e, true)
+    checkRange(p.width, 0.02, 1, `${path}.width`, e)
+    checkRange(p.afterglowMs, 0, 3000, `${path}.afterglowMs`, e)
+    checkOneOf(p.origin, ['random', 'top'], `${path}.origin`, e)
+  },
+  drops: (p, path, e) => {
+    checkColor(p.color, `${path}.color`, e)
+    checkRange(p.rate, 1, 40, `${path}.rate`, e, true)
+    checkRange(p.speed, 0.2, 8, `${path}.speed`, e)
+    checkRange(p.variation, 0, 0.9, `${path}.variation`, e)
+    checkRange(p.length, 0, 0.5, `${path}.length`, e)
+  },
+  ripple: (p, path, e) => {
+    checkColor(p.color, `${path}.color`, e)
+    checkRange(p.rate, 1, 16, `${path}.rate`, e, true)
+    checkRange(p.speed, 0.1, 4, `${path}.speed`, e)
+    checkRange(p.width, 0.01, 0.3, `${path}.width`, e)
+    checkRange(p.life, 0.05, 2, `${path}.life`, e)
+  },
+}
+
+function checkRegion(v: unknown, path: string, errors: Errors) {
+  if (!isObject(v)) return void errors.push(`${path} must be an object`)
+  checkRange(v.from, 0, 1, `${path}.from`, errors)
+  checkRange(v.to, 0, 1, `${path}.to`, errors)
+  checkRange(v.softness, 0, 0.5, `${path}.softness`, errors)
 }
 
 function checkKeyframes(v: unknown, path: string, errors: Errors) {
@@ -112,6 +142,8 @@ function parseLayer(v: unknown, path: string, errors: Errors): Layer | null {
   checkRange(v.opacity, 0, 1, `${path}.opacity`, errors)
   checkOneOf(v.speed, SPEEDS, `${path}.speed`, errors)
   checkOneOf(v.hidden, [true, false], `${path}.hidden`, errors)
+  checkOneOf(v.mirror, [true, false], `${path}.mirror`, errors)
+  if (v.region !== undefined) checkRegion(v.region, `${path}.region`, errors)
 
   if ('keyframes' in v) {
     if ('generator' in v) errors.push(`${path} must have either "generator" or "keyframes", not both`)

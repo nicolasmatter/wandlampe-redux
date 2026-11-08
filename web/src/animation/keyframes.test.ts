@@ -11,7 +11,7 @@ const kf = (at: number, color: typeof RED, easing: Easing = 'linear', extra: Par
 const anim = (...keyframes: Keyframe[]): Animation => ({
   ...defaultAnimation(),
   loopMs: 1000,
-  layers: [{ blend: 'normal', opacity: 1, speed: 1, hidden: false, keyframes }],
+  layers: [{ blend: 'normal', opacity: 1, speed: 1, hidden: false, mirror: false, keyframes }],
 })
 
 describe('keyframes', () => {
@@ -46,22 +46,29 @@ describe('keyframes', () => {
 
   it('moves stop positions between keyframes with matching stop counts', () => {
     const stops = (p: number) => [
-      { position: p, color: RED },
-      { position: p + 0.01, color: BLUE },
+      { position: 0, color: RED },
+      { position: p, color: BLUE },
     ]
     const a = anim(
-      kf(0, RED, 'linear', { edge: 'hard', stops: stops(0) }),
+      kf(0, RED, 'linear', { edge: 'hard', stops: stops(0.2) }),
       kf(0.5, RED, 'linear', { edge: 'hard', stops: stops(0.8) }),
     )
-    // Halfway, the red/blue boundary is at 0.4: LEDs before it red, after it blue.
+    // Halfway, the blue stop is at 0.5: red before it, blue from there to the end of the ring.
     const leds = render(a, 250, 10)
-    expect(leds[3]).toEqual(RED)
-    expect(leds[5]).toEqual(BLUE)
+    expect(leds[4]).toEqual(RED)
+    expect(leds[6]).toEqual(BLUE)
+  })
+
+  it('stops wrap around the ring: the last stop blends into the first across position 0', () => {
+    const a = anim(kf(0, RED, 'linear', { stops: [{ position: 0.25, color: RED }, { position: 0.75, color: BLUE }] }))
+    // Position 0 is halfway from blue (0.75) to red (1.25).
+    expect(render(a, 0, 4)[0]).toEqual({ r: 128, g: 0, b: 128 })
   })
 
   it('is count independent', () => {
-    const a = anim(kf(0, RED, 'linear', { stops: [{ position: 0, color: RED }, { position: 1, color: BLUE }] }), kf(0.5, BLUE))
-    expect(render(a, 200, 3)[1]).toEqual(render(a, 200, 1)[0])
+    const a = anim(kf(0, RED, 'linear', { stops: [{ position: 0, color: RED }, { position: 0.6, color: BLUE }] }), kf(0.5, BLUE))
+    expect(render(a, 200, 4)[2]).toEqual(render(a, 200, 2)[1])
+    expect(render(a, 200, 46)[23]).toEqual(render(a, 200, 2)[1])
   })
 
   it('combines with generator layers', () => {

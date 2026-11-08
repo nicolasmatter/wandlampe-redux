@@ -8,6 +8,7 @@
       "opacity": 1,
       "speed": 1,
       "hidden": false,
+      "mirror": false,
       "generator": "solid",
       "params": {
         "color": {
@@ -22,6 +23,7 @@
       "opacity": 1,
       "speed": 1,
       "hidden": false,
+      "mirror": false,
       "generator": "chase",
       "params": {
         "color": {

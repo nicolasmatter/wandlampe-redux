@@ -8,6 +8,8 @@ type Props = {
   keyframes: Keyframe[]
   /** Where the layer currently is in its cycle, 0–1. */
   phase: number
+  /** Stops wrap around the ring, unless the layer is mirrored (bottom → top). */
+  wrap: boolean
   onChange: (keyframes: Keyframe[]) => void
 }
 
@@ -35,17 +37,17 @@ function startDrag(e: ReactPointerEvent, track: HTMLElement | null, onMove: (x: 
   target.addEventListener('pointerup', up)
 }
 
-function cssGradient(stops: ColorStop[], edge: Edge) {
+function cssGradient(stops: ColorStop[], edge: Edge, wrap: boolean) {
   const samples = Array.from({ length: 49 }, (_, i) => i / 48)
   const sorted = [...stops].sort((a, b) => a.position - b.position)
   const parts = samples.map(x => {
-    const c = stopsAt(sorted, edge, x)
+    const c = stopsAt(sorted, edge, x, wrap)
     return `${rgbToHex({ r: Math.round(c.r), g: Math.round(c.g), b: Math.round(c.b) })} ${x * 100}%`
   })
   return `linear-gradient(to right, ${parts.join(', ')})`
 }
 
-export function KeyframeEditor({ keyframes, phase, onChange }: Props) {
+export function KeyframeEditor({ keyframes, phase, wrap, onChange }: Props) {
   const [selected, setSelected] = useState(0)
   const [selectedStop, setSelectedStop] = useState(0)
   const timeline = useRef<HTMLDivElement>(null)
@@ -81,7 +83,7 @@ export function KeyframeEditor({ keyframes, phase, onChange }: Props) {
   const addStop = (x: number) => {
     if (kf.stops.length >= MAX_STOPS) return
     const sorted = [...kf.stops].sort((a, b) => a.position - b.position)
-    setStops([...kf.stops, { position: round3(x), color: stopsAt(sorted, kf.edge, x) }])
+    setStops([...kf.stops, { position: round3(x), color: stopsAt(sorted, kf.edge, x, wrap) }])
     setSelectedStop(kf.stops.length)
   }
 
@@ -97,7 +99,7 @@ export function KeyframeEditor({ keyframes, phase, onChange }: Props) {
             key={i}
             type="button"
             className={`lab-kf-marker ${i === index ? 'selected' : ''}`}
-            style={{ left: `${k.at * 100}%`, background: cssGradient(k.stops, k.edge) }}
+            style={{ left: `${k.at * 100}%`, background: cssGradient(k.stops, k.edge, wrap) }}
             aria-label={`Keyframe at ${Math.round(k.at * 100)}%`}
             onPointerDown={e => {
               setSelected(i)
@@ -142,11 +144,15 @@ export function KeyframeEditor({ keyframes, phase, onChange }: Props) {
         </label>
       </div>
 
-      <p className="lab-hint">Click the strip to add a color stop, drag handles to move them.</p>
+      <p className="lab-hint">
+        {wrap
+          ? 'Ring from bottom, counterclockwise, back to bottom. Click to add a color stop, drag handles to move them.'
+          : 'Mirrored: bottom on the left, top on the right. Click to add a color stop, drag handles to move them.'}
+      </p>
       <div
         className="lab-stop-bar"
         ref={bar}
-        style={{ background: cssGradient(kf.stops, kf.edge) }}
+        style={{ background: cssGradient(kf.stops, kf.edge, wrap) }}
         onPointerDown={e => {
           if (e.target === bar.current) addStop(relativeX(e, bar.current))
         }}

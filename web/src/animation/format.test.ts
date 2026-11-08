@@ -100,3 +100,26 @@ describe('animationFileName', () => {
     expect(animationFileName('  ')).toBe('untitled.json')
   })
 })
+
+describe('ring fields', () => {
+  const withLayer = (layer: unknown) => ({ ...defaultAnimation(), layers: [layer] })
+
+  it('requires mirror on every layer', () => {
+    const layer: Partial<{ mirror: boolean }> = { ...generatorLayer('solid') }
+    delete layer.mirror
+    expect(parseAnimation(withLayer(layer))).toEqual({ ok: false, errors: ['layers[0].mirror must be one of true, false'] })
+  })
+
+  it('validates regions', () => {
+    const r = parseAnimation(withLayer({ ...generatorLayer('solid'), region: { from: 0.25, to: 1.2, softness: 0 } }))
+    expect(r).toEqual({ ok: false, errors: ['layers[0].region.to must be a number 0–1'] })
+    expect(parseAnimation(withLayer({ ...generatorLayer('solid'), region: { from: 0.25, to: 0.75, softness: 0.1 } })).ok).toBe(true)
+  })
+
+  it('accepts the new generators and requires an integer noise scale', () => {
+    for (const g of ['strike', 'drops', 'ripple'] as const) expect(parseAnimation(withLayer(generatorLayer(g))).ok).toBe(true)
+    const noise = generatorLayer('noise')
+    const r = parseAnimation(withLayer({ ...noise, params: { ...noise.params, scale: 2.5 } }))
+    expect(r.ok === false && r.errors).toEqual(['layers[0].params.scale must be an integer 1–16'])
+  })
+})

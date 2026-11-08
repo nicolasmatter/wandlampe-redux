@@ -8,6 +8,7 @@
       "opacity": 1,
       "speed": 1,
       "hidden": false,
+      "mirror": true,
       "keyframes": [
         {
           "at": 0,

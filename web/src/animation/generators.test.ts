@@ -22,21 +22,21 @@ describe('bands', () => {
     expect(render(bands({ repeat: 2 }), 0, 4)).toEqual([RED, BLUE, RED, BLUE])
   })
 
-  it('is count independent: LEDs at the same relative position match', () => {
+  it('is count independent: LEDs at the same ring position match', () => {
     const a = bands({ edge: 'smooth', repeat: 3, scroll: 1 })
-    // Centers of LED 0 of 1, LED 1 of 3, LED 4 of 9 and LED 22 of 45 are all at 0.5.
-    const expected = render(a, 250, 1)[0]
-    expect(render(a, 250, 3)[1]).toEqual(expected)
-    expect(render(a, 250, 9)[4]).toEqual(expected)
-    expect(render(a, 250, 45)[22]).toEqual(expected)
+    // LED 1 of 2, LED 2 of 4 and LED 23 of 46 all sit at the top (0.5).
+    const expected = render(a, 250, 2)[1]
+    expect(render(a, 250, 4)[2]).toEqual(expected)
+    expect(render(a, 250, 46)[23]).toEqual(expected)
   })
 
   it('smooth edges blend into the next color and wrap back to the first', () => {
     const leds = render(bands({ edge: 'smooth' }), 0, 4)
-    // Position 0.125 is a quarter of the way from red to blue; 0.875 is three quarters from blue back to red.
-    expect(leds[0]).toEqual({ r: 191, g: 0, b: 64 })
-    expect(leds[3]).toEqual({ r: 191, g: 0, b: 64 })
-    expect(leds[1]).toEqual({ r: 64, g: 0, b: 191 })
+    // Red at 0, blue at 0.5, back to red at 1: 0.25 and 0.75 are halfway.
+    expect(leds[0]).toEqual(RED)
+    expect(leds[1]).toEqual({ r: 128, g: 0, b: 128 })
+    expect(leds[2]).toEqual(BLUE)
+    expect(leds[3]).toEqual({ r: 128, g: 0, b: 128 })
   })
 
   it('scrolling moves the pattern and loops seamlessly', () => {
@@ -85,44 +85,50 @@ const chase = (p: Partial<ChaseParams>): Animation =>
 const lit = (leds: { r: number }[]) => leds.flatMap((c, i) => (c.r > 0 ? [i] : []))
 
 describe('chase', () => {
-  // With 20 LEDs, LED i is centered at 0.025 + 0.05 i. Heads are placed on centers to avoid boundary rounding.
-  it('moves its head one strip length per cycle', () => {
+  // With 20 LEDs, LED i sits at 0.05 i. Heads are placed on LEDs to avoid boundary rounding.
+  it('moves its head one ring length per cycle', () => {
     const a = chase({ width: 0.04 })
-    expect(lit(render(a, 25, 20))).toEqual([0])
-    expect(lit(render(a, 525, 20))).toEqual([10])
+    expect(lit(render(a, 0, 20))).toEqual([0])
+    expect(lit(render(a, 500, 20))).toEqual([10])
     expect(render(a, 1000, 20)).toEqual(render(a, 0, 20))
   })
 
   it('runs backward with direction -1', () => {
-    expect(lit(render(chase({ width: 0.04, direction: -1 }), 475, 20))).toEqual([10])
+    expect(lit(render(chase({ width: 0.04, direction: -1 }), 250, 20))).toEqual([15])
   })
 
   it('fades a tail behind the head only', () => {
-    const leds = render(chase({ width: 0.04, tail: 0.3 }), 525, 20)
+    const leds = render(chase({ width: 0.04, tail: 0.3 }), 500, 20)
     expect(leds[10].r).toBe(255)
     expect(leds[7].r).toBeGreaterThan(0)
     expect(leds[7].r).toBeLessThan(leds[9].r)
     expect(leds[12].r).toBe(0)
   })
 
+  it('wraps its tail across the bottom of the ring', () => {
+    const leds = render(chase({ width: 0.04, tail: 0.2 }), 50, 20)
+    expect(leds[1].r).toBe(255)
+    expect(leds[19].r).toBeGreaterThan(0)
+  })
+
   it('spaces several dots evenly', () => {
-    expect(lit(render(chase({ count: 2, width: 0.04 }), 275, 20))).toEqual([5, 15])
+    expect(lit(render(chase({ count: 2, width: 0.04 }), 250, 20))).toEqual([5, 15])
   })
 
   it('bounces back and loops seamlessly', () => {
-    const a = chase({ bounce: true, width: 0.06 })
-    expect(lit(render(a, 262.5, 20))).toEqual([10])
-    expect(lit(render(a, 737.5, 20))).toEqual([10])
-    expect(lit(render(a, 500, 20))).toEqual([19])
+    const a = chase({ bounce: true, width: 0.04 })
+    expect(lit(render(a, 250, 20))).toEqual([10])
+    expect(lit(render(a, 750, 20))).toEqual([10])
+    expect(lit(render(a, 500, 20))).toEqual([0])
     expect(render(a, 1000, 20)).toEqual(render(a, 0, 20))
   })
 
   it('the tail follows the travel direction when bouncing', () => {
     const a = chase({ bounce: true, width: 0.04, tail: 0.2 })
-    expect(render(a, 262.5, 20)[8].r).toBeGreaterThan(0)
-    expect(render(a, 262.5, 20)[12].r).toBe(0)
-    expect(render(a, 737.5, 20)[12].r).toBeGreaterThan(0)
-    expect(render(a, 737.5, 20)[8].r).toBe(0)
+    expect(render(a, 250, 20)[8].r).toBeGreaterThan(0)
+    expect(render(a, 250, 20)[12].r).toBe(0)
+    expect(render(a, 750, 20)[12].r).toBeGreaterThan(0)
+    expect(render(a, 750, 20)[8].r).toBe(0)
   })
 })
 

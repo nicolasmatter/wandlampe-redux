@@ -4,7 +4,7 @@ import { defaultAnimation, generatorLayer } from './defaults'
 import type { Animation, Layer } from './types'
 
 const solid = (r: number, g: number, b: number, over: Partial<Pick<Layer, 'blend' | 'opacity' | 'speed' | 'hidden'>> = {}): Layer => ({
-  blend: 'normal', opacity: 1, speed: 1, hidden: false, generator: 'solid', params: { color: { r, g, b } }, ...over,
+  blend: 'normal', opacity: 1, speed: 1, hidden: false, mirror: false, generator: 'solid', params: { color: { r, g, b } }, ...over,
 })
 const anim = (...layers: Layer[]): Animation => ({ ...defaultAnimation(), layers })
 

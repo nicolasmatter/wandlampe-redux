@@ -1,6 +1,5 @@
 import type { RGB } from '../types'
 import { frac, lerp, mixRgb } from './color'
-import { ledPosition } from './generators'
 import type { ColorStop, Easing, Edge, Keyframe } from './types'
 
 function ease(easing: Easing, t: number): number {
@@ -9,27 +8,36 @@ function ease(easing: Easing, t: number): number {
   return t
 }
 
-/** Color at x for stops sorted by position. Outside the stops, the nearest stop's color holds. */
-export function stopsAt(stops: ColorStop[], edge: Edge, x: number): RGB {
-  if (x <= stops[0].position) return stops[0].color
-  for (let i = stops.length - 1; i >= 0; i--) {
-    if (x < stops[i].position) continue
-    const next = stops[i + 1]
-    if (!next || edge === 'hard') return stops[i].color
-    const span = next.position - stops[i].position
-    return span <= 0 ? next.color : mixRgb(stops[i].color, next.color, (x - stops[i].position) / span)
+/**
+ * Color at x for stops sorted by position. With `wrap` (around the ring), the
+ * last stop blends into the first across position 1 → 0. Without it (a mirrored
+ * half), colors hold beyond the first and last stops.
+ */
+export function stopsAt(stops: ColorStop[], edge: Edge, x: number, wrap = true): RGB {
+  const n = stops.length
+  if (n === 1) return stops[0].color
+  let i = -1
+  for (let k = 0; k < n; k++) if (stops[k].position <= x) i = k
+  if (!wrap) {
+    if (i < 0) return stops[0].color
+    if (i === n - 1) return stops[i].color
   }
-  return stops[0].color
+  const prev = i < 0 ? stops[n - 1] : stops[i]
+  const next = i < 0 ? stops[0] : stops[(i + 1) % n]
+  if (edge === 'hard') return prev.color
+  const span = frac(next.position - prev.position) || 1
+  return mixRgb(prev.color, next.color, frac(x - prev.position) / span)
 }
 
 const byPosition = (stops: ColorStop[]) => [...stops].sort((a, b) => a.position - b.position)
 
 /**
- * The strip at `phase` (0–1). Between two keyframes with the same number of
- * stops, both stop positions and colors move; otherwise the two strips crossfade.
- * After the last keyframe, the layer moves into the first one again.
+ * Colors at the given positions when the layer is at `phase` (0–1). Between two
+ * keyframes with the same number of stops, both stop positions and colors move;
+ * otherwise the two strips crossfade. After the last keyframe, the layer moves
+ * into the first one again.
  */
-export function renderKeyframes(keyframes: Keyframe[], phase: number, ledCount: number): RGB[] {
+export function renderKeyframes(keyframes: Keyframe[], phase: number, xs: number[], wrap = true): RGB[] {
   const sorted = [...keyframes].sort((a, b) => a.at - b.at)
   let i = sorted.length - 1
   for (let k = 0; k < sorted.length; k++) if (sorted[k].at <= phase) i = k
@@ -40,13 +48,12 @@ export function renderKeyframes(keyframes: Keyframe[], phase: number, ledCount: 
 
   const a = byPosition(from.stops)
   const b = byPosition(to.stops)
-  const xs = Array.from({ length: ledCount }, (_, n) => ledPosition(n, ledCount))
 
   if (a.length === b.length) {
     const stops = byPosition(
       a.map((s, n) => ({ position: lerp(s.position, b[n].position, t), color: mixRgb(s.color, b[n].color, t) })),
     )
-    return xs.map(x => stopsAt(stops, from.edge, x))
+    return xs.map(x => stopsAt(stops, from.edge, x, wrap))
   }
-  return xs.map(x => mixRgb(stopsAt(a, from.edge, x), stopsAt(b, to.edge, x), t))
+  return xs.map(x => mixRgb(stopsAt(a, from.edge, x, wrap), stopsAt(b, to.edge, x, wrap), t))
 }

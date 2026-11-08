@@ -47,6 +47,10 @@ _Avoid_: Strip (when meaning the shape), circle, loop
 A layer drawn once along a half-ring from bottom (0) to top (1) and shown identically on both sides of the ring.
 _Avoid_: Symmetry, reflect, flip
 
+**Region**:
+An arc of the ring, from one position counterclockwise to another, that limits where a layer shows; it masks the layer rather than squeezing it into the arc.
+_Avoid_: Zone, segment, half (unless it is exactly half)
+
 **Color stop**:
 A color at a relative position on the ring, from 0 to 1, independent of the LED count. Stops wrap around, so the last one blends back into the first.
 _Avoid_: Pixel, LED value

@@ -35,8 +35,8 @@ export function PreviewControls({ settings, onChange }: Props) {
         <span>Gamma</span>
       </label>
       <label className="lab-inline">
-        <input type="checkbox" checked={settings.glow} onChange={e => onChange({ glow: e.target.checked })} />
-        <span>Glow</span>
+        <input type="checkbox" checked={settings.halo} onChange={e => onChange({ halo: e.target.checked })} />
+        <span>Wall halo</span>
       </label>
     </div>
   )

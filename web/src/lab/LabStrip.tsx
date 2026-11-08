@@ -1,37 +1,35 @@
-import { render } from '../animation/engine'
-import type { Animation } from '../animation/types'
-import { rgbToHex } from '../modeUtils'
-import { ledLook } from './ledLook'
-
 export type PreviewSettings = {
   ledCount: number
   brightness: number
   gamma: boolean
-  glow: boolean
+  /** Outward light on the wall around the ring. */
+  halo: boolean
 }
 
-type Props = {
-  animation: Animation
-  timeMs: number
-  /** Never-wrapping time for free-running layers. */
-  clockMs: number
-  settings: PreviewSettings
-}
+const MARKS = [
+  ['Bottom', 0],
+  ['Right', 0.25],
+  ['Top', 0.5],
+  ['Left', 0.75],
+  ['Bottom', 1],
+] as const
 
-/** Shows one moment of an animation on a simulated strip. */
-export function LabStrip({ animation, timeMs, clockMs, settings }: Props) {
-  const leds = render(animation, timeMs, settings.ledCount, clockMs).map(c =>
-    rgbToHex(ledLook(c, settings.brightness, settings.gamma)),
-  )
-
+/** The ring cut open at the bottom and laid flat: position 0 on the left, 1 on the right. */
+export function LabStrip({ colors }: { colors: string[] }) {
   return (
-    <div
-      className={`lab-strip ${settings.glow ? 'glow' : ''}`}
-      style={{ gridTemplateColumns: `repeat(${settings.ledCount}, minmax(0, 1fr))` }}
-    >
-      {leds.map((hex, i) => (
-        <div key={i} className="lab-led" style={{ background: hex, color: hex }} />
-      ))}
+    <div className="lab-strip-wrap">
+      <div className="lab-strip" style={{ gridTemplateColumns: `repeat(${colors.length}, minmax(0, 1fr))` }}>
+        {colors.map((hex, i) => (
+          <div key={i} className="lab-led" style={{ background: hex }} />
+        ))}
+      </div>
+      <div className="lab-strip-marks" aria-hidden>
+        {MARKS.map(([label, at], i) => (
+          <span key={i} style={{ left: `${at * 100}%` }}>
+            {label}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

@@ -23,15 +23,20 @@ export function hash01(seed: number, a: number, b = 0, c = 0): number {
 
 const smooth = (t: number) => t * t * (3 - 2 * t)
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+const mod = (a: number, n: number) => ((a % n) + n) % n
 
-/** 3D value noise in [0, 1]: random values on the integer lattice, smoothly interpolated. */
-export function valueNoise3(seed: number, x: number, y: number, z: number): number {
+/**
+ * 3D value noise in [0, 1]: random values on the integer lattice, smoothly
+ * interpolated. The x lattice repeats every `periodX` units, so x tiles seamlessly.
+ */
+export function valueNoise3(seed: number, x: number, y: number, z: number, periodX: number): number {
   const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z)
   const tx = smooth(x - xi), ty = smooth(y - yi), tz = smooth(z - zi)
-  const v = (dx: number, dy: number, dz: number) => hash01(seed, xi + dx, yi + dy, zi + dz)
-  const x00 = lerp(v(0, 0, 0), v(1, 0, 0), tx)
-  const x10 = lerp(v(0, 1, 0), v(1, 1, 0), tx)
-  const x01 = lerp(v(0, 0, 1), v(1, 0, 1), tx)
-  const x11 = lerp(v(0, 1, 1), v(1, 1, 1), tx)
-  return lerp(lerp(x00, x10, ty), lerp(x01, x11, ty), tz)
+  const x0 = mod(xi, periodX), x1 = mod(xi + 1, periodX)
+  const v = (xx: number, dy: number, dz: number) => hash01(seed, xx, yi + dy, zi + dz)
+  const a00 = lerp(v(x0, 0, 0), v(x1, 0, 0), tx)
+  const a10 = lerp(v(x0, 1, 0), v(x1, 1, 0), tx)
+  const a01 = lerp(v(x0, 0, 1), v(x1, 0, 1), tx)
+  const a11 = lerp(v(x0, 1, 1), v(x1, 1, 1), tx)
+  return lerp(lerp(a00, a10, ty), lerp(a01, a11, ty), tz)
 }

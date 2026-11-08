@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { generatorLayer } from '../animation/defaults'
-import { cycleMs } from '../animation/engine'
+import { cycleMs, render } from '../animation/engine'
 import type { Animation, Layer } from '../animation/types'
 import { LAB_DEFAULT_LED_COUNT } from '../config'
+import { rgbToHex } from '../modeUtils'
+import { LabRing } from './LabRing'
 import { LabStrip, type PreviewSettings } from './LabStrip'
+import { ledLook } from './ledLook'
 import { LayerEditor } from './LayerEditor'
 import { layerLabel } from './labels'
 import { LayerStack } from './LayerStack'
@@ -19,7 +22,7 @@ export function LabApp() {
     ledCount: LAB_DEFAULT_LED_COUNT,
     brightness: 255,
     gamma: true,
-    glow: true,
+    halo: true,
   })
   const cycle = cycleMs(animation)
   const { playing, setPlaying, timeMs, clockMs, seek } = usePlayback(cycle)
@@ -33,6 +36,9 @@ export function LabApp() {
   const index = Math.min(selected, animation.layers.length - 1)
   const layer = animation.layers[index]
   const layerPhase = ((timeMs / animation.loopMs) * layer.speed) % 1
+  const colors = render(animation, timeMs, preview.ledCount, clockMs).map(c =>
+    rgbToHex(ledLook(c, preview.brightness, preview.gamma)),
+  )
 
   return (
     <main className="lab">
@@ -42,7 +48,10 @@ export function LabApp() {
       </header>
 
       <section className="lab-preview">
-        <LabStrip animation={animation} timeMs={timeMs} clockMs={clockMs} settings={preview} />
+        <div className="lab-ring-wrap">
+          <LabRing colors={colors} halo={preview.halo} />
+        </div>
+        <LabStrip colors={colors} />
         <div className="lab-transport">
           <button type="button" onClick={() => setPlaying(p => !p)}>
             {playing ? 'Pause' : 'Play'}

@@ -1,6 +1,6 @@
 # Wandlampe
 
-Firmware and web controller for an Arduino Nano ESP32 wall lamp with 24 WS2812B LEDs.
+Firmware and web controller for an Arduino Nano ESP32 wall lamp: a ring of WS2812B LEDs mounted flat on the wall, facing outward. The firmware in this branch still assumes 24 LEDs; the lamp has 46.
 
 The browser publishes mode configurations to an MQTT broker. The lamp stores them in flash, and its physical toggle switch cycles through off → mode 1 → off → mode 2 → … . Selecting a mode in the web editor does not activate it on the lamp.
 
@@ -34,7 +34,7 @@ npm test
 
 ### Lab
 
-`/lab.html` is the animation test page (see [specs/lab](specs/lab/PRD.md)). Build animations from up to three layers of generators (`solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`) or keyframes, and preview them on a simulated strip. It does not talk to MQTT; the lamp cannot play these animations yet.
+`/lab.html` is the animation test page (see [specs/lab](specs/lab/PRD.md) and [specs/lab-ring](specs/lab-ring/PRD.md)). Build animations from up to three layers of generators (`solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`, `strike`, `drops`, `ripple`) or keyframes. Layers can be mirrored (bottom → top on both sides) or limited to a region such as the top half. The preview shows the lamp's ring as it hangs on the wall: LED 0 at the bottom, counterclockwise, with light spilling outward onto the wall. It does not talk to MQTT; the lamp cannot play these animations yet.
 
 With `npm run dev`, **Save** writes `animations/<name>.json` in the repo and **Open** lists those files. The deployed Lab offers JSON download and upload instead. `npm test` checks that every committed animation is valid.
 

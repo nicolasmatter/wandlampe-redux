@@ -17,6 +17,9 @@ export const GENERATOR_LABELS: Record<GeneratorName, string> = {
   chase: 'Chase',
   sparkle: 'Sparkle',
   noise: 'Noise',
+  strike: 'Strike (lightning)',
+  drops: 'Drops (rain)',
+  ripple: 'Ripple',
 }
 
 const WARM = { r: 255, g: 140, b: 40 }
@@ -48,14 +51,18 @@ export function defaultParams<G extends GeneratorName>(generator: G): GeneratorP
         { r: 255, g: 220, b: 120 },
       ],
       scale: 4,
+      contrast: 1.8,
     },
+    strike: { color: { r: 220, g: 225, b: 255 }, rate: 1.5, flickers: 3, width: 0.3, afterglowMs: 600, origin: 'random' },
+    drops: { color: { r: 140, g: 180, b: 255 }, rate: 6, speed: 1.4, variation: 0.5, length: 0.1 },
+    ripple: { color: { r: 80, g: 200, b: 255 }, rate: 3, speed: 0.6, width: 0.05, life: 0.8 },
   }
   return all[generator]
 }
 
 export const randomSeed = () => Math.floor(Math.random() * 0x7fffffff)
 
-const BASE = { blend: 'normal', opacity: 1, speed: 1, hidden: false } as const
+const BASE = { blend: 'normal', opacity: 1, speed: 1, hidden: false, mirror: false } as const
 
 export function generatorLayer(generator: GeneratorName): GeneratorLayer {
   const random = isRandomGenerator(generator) ? { seed: randomSeed(), freeRunning: false } : {}
@@ -69,7 +76,7 @@ export function defaultKeyframe(at: number): Keyframe {
     edge: 'smooth',
     stops: [
       { position: 0, color: { r: 255, g: 60, b: 0 } },
-      { position: 1, color: { r: 0, g: 40, b: 255 } },
+      { position: 0.5, color: { r: 0, g: 40, b: 255 } },
     ],
   }
 }
@@ -78,17 +85,26 @@ export function keyframeLayer(): KeyframeLayer {
   const second = defaultKeyframe(0.5)
   second.stops = [
     { position: 0, color: { r: 0, g: 40, b: 255 } },
-    { position: 1, color: { r: 255, g: 60, b: 0 } },
+    { position: 0.5, color: { r: 255, g: 60, b: 0 } },
   ]
   return { ...BASE, keyframes: [defaultKeyframe(0), second] }
 }
 
 /** Keeps blend, opacity, speed and visibility when switching what a layer draws. */
 export function withContent(layer: Layer, content: GeneratorName | 'keyframes'): Layer {
-  const { blend, opacity, speed, hidden } = layer
+  const { blend, opacity, speed, hidden, mirror, region } = layer
   const fresh = content === 'keyframes' ? keyframeLayer() : generatorLayer(content)
-  return { ...fresh, blend, opacity, speed, hidden }
+  return { ...fresh, blend, opacity, speed, hidden, mirror, ...(region ? { region } : {}) }
 }
+
+/** Named arcs for the region picker. from === to means the whole ring. */
+export const REGION_PRESETS = {
+  whole: { from: 0, to: 0 },
+  top: { from: 0.25, to: 0.75 },
+  bottom: { from: 0.75, to: 0.25 },
+  right: { from: 0, to: 0.5 },
+  left: { from: 0.5, to: 1 },
+} as const
 
 export function defaultAnimation(): Animation {
   return { version: ANIMATION_FORMAT_VERSION, name: 'Untitled', loopMs: 4000, layers: [generatorLayer('solid')] }

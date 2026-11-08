@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "name": "Day and night",
+  "loopMs": 8000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "bands",
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.06
+      },
+      "params": {
+        "colors": [
+          {
+            "r": 255,
+            "g": 180,
+            "b": 60
+          },
+          {
+            "r": 255,
+            "g": 230,
+            "b": 150
+          },
+          {
+            "r": 255,
+            "g": 140,
+            "b": 30
+          }
+        ],
+        "edge": "smooth",
+        "repeat": 2,
+        "scroll": 1
+      }
+    },
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "sparkle",
+      "region": {
+        "from": 0.75,
+        "to": 0.25,
+        "softness": 0.06
+      },
+      "params": {
+        "color": {
+          "r": 180,
+          "g": 200,
+          "b": 255
+        },
+        "density": 0.25,
+        "fade": 0.3
+      },
+      "seed": 17,
+      "freeRunning": false
+    }
+  ]
+}
