@@ -26,11 +26,11 @@ Opening `/lab.html` shows a 46-LED strip playing a one-layer `solid` animation w
 
 ### Acceptance criteria
 
-- [ ] `/lab.html` works in dev and in the production build; the controller is unchanged
-- [ ] Vitest runs via an npm script; engine tests cover `solid` and loop seamlessness
-- [ ] Editing the color or loop length updates the preview live
-- [ ] Reloading restores the last animation from local storage
-- [ ] `npm run build` and the tests pass
+- [x] `/lab.html` works in dev and in the production build; the controller is unchanged
+- [x] Vitest runs via an npm script; engine tests cover `solid` and loop seamlessness
+- [x] Editing the color or loop length updates the preview live
+- [x] Reloading restores the last animation from local storage
+- [x] `npm run build` and the tests pass
 
 ---
 
