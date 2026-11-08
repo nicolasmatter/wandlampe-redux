@@ -17,7 +17,7 @@ The test page where animations are created and previewed, separate from the cont
 _Avoid_: Playground, sandbox, editor
 
 **Generator**:
-A named, parameterised building block of an animation, such as a chase or a wave, defined entirely by its parameter values.
+A named, parameterised building block of an animation, such as bands or a chase, defined entirely by its parameter values.
 _Avoid_: Effect, plugin, preset
 
 **Loop**:
