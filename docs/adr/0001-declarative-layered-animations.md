@@ -13,3 +13,4 @@ Animations are described as data: a shared loop, up to three layers (`normal`/`a
 - Browser and firmware must implement each generator, blend mode, easing curve, and the seeded pseudo-random/noise functions identically; committed `animations/*.json` files are the reference set.
 - Random layers are seeded and loop exactly by default; free-running layers accept that the preview only approximates the lamp.
 - Modes embed a full copy of their animation; there is no shared animation library in the config.
+- Animations are defined on the lamp's ring: positions wrap (0 = bottom, counterclockwise, 0.5 = top), mirroring is about the vertical axis, and regions mask arcs rather than remapping them. Firmware must use the same geometry.

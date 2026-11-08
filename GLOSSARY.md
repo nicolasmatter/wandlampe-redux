@@ -39,6 +39,14 @@ _Avoid_: Live, unseeded
 A set of color stops at a point in the loop; colors and stop positions between keyframes are interpolated.
 _Avoid_: Frame, snapshot
 
+**Ring**:
+The lamp's LED strip, closed into a circle mounted flat on the wall. Position 0 is the bottom and positions increase counterclockwise as you face the lamp; 0.5 is the top, and 1 is the bottom again.
+_Avoid_: Strip (when meaning the shape), circle, loop
+
+**Mirror**:
+A layer drawn once along a half-ring from bottom (0) to top (1) and shown identically on both sides of the ring.
+_Avoid_: Symmetry, reflect, flip
+
 **Color stop**:
-A color at a relative position along the strip, from 0 (first LED) to 1 (last LED), independent of the LED count.
+A color at a relative position on the ring, from 0 to 1, independent of the LED count. Stops wrap around, so the last one blends back into the first.
 _Avoid_: Pixel, LED value
