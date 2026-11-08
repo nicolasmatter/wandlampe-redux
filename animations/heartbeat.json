@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "name": "Heartbeat",
+  "loopMs": 1100,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "keyframes": [
+        {
+          "at": 0,
+          "easing": "linear",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 255,
+                "g": 0,
+                "b": 30
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 120,
+                "g": 0,
+                "b": 15
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.12,
+          "easing": "linear",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 40,
+                "g": 0,
+                "b": 5
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 10,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.22,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 200,
+                "g": 0,
+                "b": 25
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 90,
+                "g": 0,
+                "b": 10
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.45,
+          "easing": "step",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 15,
+                "g": 0,
+                "b": 2
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 5,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
