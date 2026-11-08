@@ -8,9 +8,10 @@ describe('parseAnimation', () => {
     expect(parseAnimation(JSON.parse(serializeAnimation(a)))).toEqual({ ok: true, animation: a })
   })
 
-  it('rejects more than three layers', () => {
+  it('accepts four layers and rejects a fifth', () => {
     const a = defaultAnimation()
-    const r = parseAnimation({ ...a, layers: [a.layers[0], a.layers[0], a.layers[0], a.layers[0]] })
+    expect(parseAnimation({ ...a, layers: Array(4).fill(a.layers[0]) }).ok).toBe(true)
+    const r = parseAnimation({ ...a, layers: Array(5).fill(a.layers[0]) })
     expect(r.ok).toBe(false)
   })
 
