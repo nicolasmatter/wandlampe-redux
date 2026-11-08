@@ -13,12 +13,14 @@ export type PreviewSettings = {
 type Props = {
   animation: Animation
   timeMs: number
+  /** Never-wrapping time for free-running layers. */
+  clockMs: number
   settings: PreviewSettings
 }
 
 /** Shows one moment of an animation on a simulated strip. */
-export function LabStrip({ animation, timeMs, settings }: Props) {
-  const leds = render(animation, timeMs, settings.ledCount).map(c =>
+export function LabStrip({ animation, timeMs, clockMs, settings }: Props) {
+  const leds = render(animation, timeMs, settings.ledCount, clockMs).map(c =>
     rgbToHex(ledLook(c, settings.brightness, settings.gamma)),
   )
 

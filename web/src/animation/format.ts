@@ -1,81 +1,145 @@
-import type { RGB } from '../types'
 import {
   ANIMATION_FORMAT_VERSION,
-  MAX_BAND_COLORS,
+  MAX_KEYFRAMES,
   MAX_LAYERS,
-  MIN_BAND_COLORS,
+  MAX_PALETTE_COLORS,
+  MAX_STOPS,
+  MIN_PALETTE_COLORS,
+  RANDOM_GENERATORS,
+  SPEEDS,
   type Animation,
   type Layer,
 } from './types'
 
 export type ParseResult = { ok: true; animation: Animation } | { ok: false; errors: string[] }
 
-const isObject = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v)
+type Errors = string[]
+type Obj = Record<string, unknown>
 
-const isByte = (v: unknown) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 255
+const isObject = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isIntIn = (v: unknown, min: number, max: number) => Number.isInteger(v) && (v as number) >= min && (v as number) <= max
+const isNumIn = (v: unknown, min: number, max: number) => typeof v === 'number' && v >= min && v <= max
 
-function checkColor(v: unknown, path: string, errors: string[]): v is RGB {
-  if (isObject(v) && isByte(v.r) && isByte(v.g) && isByte(v.b)) return true
-  errors.push(`${path} must be {r,g,b} with integers 0–255`)
-  return false
+function checkColor(v: unknown, path: string, errors: Errors) {
+  if (!(isObject(v) && isIntIn(v.r, 0, 255) && isIntIn(v.g, 0, 255) && isIntIn(v.b, 0, 255))) {
+    errors.push(`${path} must be {r,g,b} with integers 0–255`)
+  }
 }
 
-const isIntIn = (v: unknown, min: number, max: number) =>
-  Number.isInteger(v) && (v as number) >= min && (v as number) <= max
+function checkOneOf(v: unknown, allowed: readonly unknown[], path: string, errors: Errors) {
+  if (!allowed.includes(v)) errors.push(`${path} must be one of ${allowed.map(a => JSON.stringify(a)).join(', ')}`)
+}
 
-type ParamCheck = (p: Record<string, unknown>, path: string, errors: string[]) => void
+function checkRange(v: unknown, min: number, max: number, path: string, errors: Errors, int = false) {
+  if (!(int ? isIntIn(v, min, max) : isNumIn(v, min, max))) errors.push(`${path} must be ${int ? 'an integer' : 'a number'} ${min}–${max}`)
+}
 
-const PARAM_CHECKS: Record<string, ParamCheck> = {
-  solid: (p, path, errors) => {
-    checkColor(p.color, `${path}.color`, errors)
+function checkPalette(v: unknown, path: string, errors: Errors) {
+  if (!Array.isArray(v) || v.length < MIN_PALETTE_COLORS || v.length > MAX_PALETTE_COLORS) {
+    errors.push(`${path} must hold ${MIN_PALETTE_COLORS}–${MAX_PALETTE_COLORS} colors`)
+  } else {
+    v.forEach((c, i) => checkColor(c, `${path}[${i}]`, errors))
+  }
+}
+
+const PARAM_CHECKS: Record<string, (p: Obj, path: string, errors: Errors) => void> = {
+  solid: (p, path, e) => checkColor(p.color, `${path}.color`, e),
+  bands: (p, path, e) => {
+    checkPalette(p.colors, `${path}.colors`, e)
+    checkOneOf(p.edge, ['smooth', 'hard'], `${path}.edge`, e)
+    checkRange(p.repeat, 1, 16, `${path}.repeat`, e, true)
+    checkOneOf(p.scroll, [-1, 0, 1], `${path}.scroll`, e)
   },
-  bands: (p, path, errors) => {
-    if (!Array.isArray(p.colors) || p.colors.length < MIN_BAND_COLORS || p.colors.length > MAX_BAND_COLORS) {
-      errors.push(`${path}.colors must hold ${MIN_BAND_COLORS}–${MAX_BAND_COLORS} colors`)
-    } else {
-      p.colors.forEach((c, i) => checkColor(c, `${path}.colors[${i}]`, errors))
+  pulse: (p, path, e) => {
+    checkColor(p.color, `${path}.color`, e)
+    checkRange(p.min, 0, 255, `${path}.min`, e, true)
+    checkRange(p.max, 0, 255, `${path}.max`, e, true)
+    checkOneOf(p.curve, ['sine', 'sharp'], `${path}.curve`, e)
+  },
+  chase: (p, path, e) => {
+    checkColor(p.color, `${path}.color`, e)
+    checkRange(p.width, 0, 1, `${path}.width`, e)
+    checkRange(p.tail, 0, 1, `${path}.tail`, e)
+    checkRange(p.count, 1, 8, `${path}.count`, e, true)
+    checkOneOf(p.direction, [1, -1], `${path}.direction`, e)
+    checkOneOf(p.bounce, [true, false], `${path}.bounce`, e)
+  },
+  sparkle: (p, path, e) => {
+    checkColor(p.color, `${path}.color`, e)
+    checkRange(p.density, 0, 1, `${path}.density`, e)
+    checkRange(p.fade, 0.01, 1, `${path}.fade`, e)
+  },
+  noise: (p, path, e) => {
+    checkPalette(p.colors, `${path}.colors`, e)
+    checkRange(p.scale, 1, 16, `${path}.scale`, e)
+  },
+}
+
+function checkKeyframes(v: unknown, path: string, errors: Errors) {
+  if (!Array.isArray(v) || v.length < 1 || v.length > MAX_KEYFRAMES) {
+    errors.push(`${path} must hold 1–${MAX_KEYFRAMES} keyframes`)
+    return
+  }
+  v.forEach((k, i) => {
+    const kp = `${path}[${i}]`
+    if (!isObject(k)) return void errors.push(`${kp} must be an object`)
+    checkRange(k.at, 0, 1, `${kp}.at`, errors)
+    if (isNumIn(k.at, 0, 1) && v.some((o, j) => j < i && isObject(o) && o.at === k.at)) {
+      errors.push(`${kp}.at duplicates another keyframe`)
     }
-    if (p.edge !== 'smooth' && p.edge !== 'hard') errors.push(`${path}.edge must be "smooth" or "hard"`)
-    if (!isIntIn(p.repeat, 1, 16)) errors.push(`${path}.repeat must be an integer 1–16`)
-    if (![-1, 0, 1].includes(p.scroll as number)) errors.push(`${path}.scroll must be -1, 0 or 1`)
-  },
-  pulse: (p, path, errors) => {
-    checkColor(p.color, `${path}.color`, errors)
-    if (!isIntIn(p.min, 0, 255)) errors.push(`${path}.min must be an integer 0–255`)
-    if (!isIntIn(p.max, 0, 255)) errors.push(`${path}.max must be an integer 0–255`)
-    if (p.curve !== 'sine' && p.curve !== 'sharp') errors.push(`${path}.curve must be "sine" or "sharp"`)
-  },
+    checkOneOf(k.easing, ['linear', 'ease-in-out', 'step'], `${kp}.easing`, errors)
+    checkOneOf(k.edge, ['smooth', 'hard'], `${kp}.edge`, errors)
+    if (!Array.isArray(k.stops) || k.stops.length < 1 || k.stops.length > MAX_STOPS) {
+      errors.push(`${kp}.stops must hold 1–${MAX_STOPS} color stops`)
+      return
+    }
+    k.stops.forEach((s, j) => {
+      const sp = `${kp}.stops[${j}]`
+      if (!isObject(s)) return void errors.push(`${sp} must be an object`)
+      checkRange(s.position, 0, 1, `${sp}.position`, errors)
+      checkColor(s.color, `${sp}.color`, errors)
+    })
+  })
 }
 
-function parseLayer(v: unknown, path: string, errors: string[]): Layer | null {
+function parseLayer(v: unknown, path: string, errors: Errors): Layer | null {
   if (!isObject(v)) {
     errors.push(`${path} must be an object`)
     return null
   }
   const before = errors.length
-  if (v.blend !== 'normal' && v.blend !== 'add') errors.push(`${path}.blend must be "normal" or "add"`)
-  if (typeof v.opacity !== 'number' || v.opacity < 0 || v.opacity > 1) errors.push(`${path}.opacity must be 0–1`)
-  if (![0.5, 1, 2, 4].includes(v.speed as number)) errors.push(`${path}.speed must be 0.5, 1, 2 or 4`)
-  if (typeof v.hidden !== 'boolean') errors.push(`${path}.hidden must be a boolean`)
-  const check = PARAM_CHECKS[v.generator as string]
-  if (!check) {
-    errors.push(`${path}.generator "${String(v.generator)}" is unknown`)
-  } else if (!isObject(v.params)) {
-    errors.push(`${path}.params must be an object`)
+  checkOneOf(v.blend, ['normal', 'add'], `${path}.blend`, errors)
+  checkRange(v.opacity, 0, 1, `${path}.opacity`, errors)
+  checkOneOf(v.speed, SPEEDS, `${path}.speed`, errors)
+  checkOneOf(v.hidden, [true, false], `${path}.hidden`, errors)
+
+  if ('keyframes' in v) {
+    if ('generator' in v) errors.push(`${path} must have either "generator" or "keyframes", not both`)
+    checkKeyframes(v.keyframes, `${path}.keyframes`, errors)
   } else {
-    check(v.params, `${path}.params`, errors)
+    const check = PARAM_CHECKS[v.generator as string]
+    if (!check) {
+      errors.push(`${path}.generator "${String(v.generator)}" is unknown`)
+    } else if (!isObject(v.params)) {
+      errors.push(`${path}.params must be an object`)
+    } else {
+      check(v.params, `${path}.params`, errors)
+    }
+    if ((RANDOM_GENERATORS as readonly unknown[]).includes(v.generator)) {
+      checkRange(v.seed, 0, 0xffffffff, `${path}.seed`, errors, true)
+      checkOneOf(v.freeRunning, [true, false], `${path}.freeRunning`, errors)
+    }
   }
   return errors.length === before ? (v as unknown as Layer) : null
 }
 
 /** Validates unknown JSON into an Animation, or lists every problem found. */
 export function parseAnimation(v: unknown): ParseResult {
-  const errors: string[] = []
+  const errors: Errors = []
   if (!isObject(v)) return { ok: false, errors: ['animation must be an object'] }
   if (v.version !== ANIMATION_FORMAT_VERSION) errors.push(`version must be ${ANIMATION_FORMAT_VERSION}`)
-  if (typeof v.name !== 'string') errors.push('name must be a string')
-  if (typeof v.loopMs !== 'number' || !(v.loopMs > 0)) errors.push('loopMs must be a positive number')
+  if (typeof v.name !== 'string' || !v.name.trim()) errors.push('name must be a non-empty string')
+  checkRange(v.loopMs, 100, 600000, 'loopMs', errors, true)
   const layers: Layer[] = []
   if (!Array.isArray(v.layers) || v.layers.length < 1 || v.layers.length > MAX_LAYERS) {
     errors.push(`layers must be an array of 1–${MAX_LAYERS} layers`)
@@ -94,4 +158,15 @@ export function parseAnimation(v: unknown): ParseResult {
 
 export function serializeAnimation(animation: Animation): string {
   return JSON.stringify(animation, null, 2) + '\n'
+}
+
+/** File name for an animation: lowercase letters, digits and dashes. */
+export function animationFileName(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return `${slug || 'untitled'}.json`
 }

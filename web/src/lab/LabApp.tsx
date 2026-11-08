@@ -1,26 +1,38 @@
 import { useEffect, useState } from 'react'
-import { LAB_DEFAULT_LED_COUNT } from '../config'
+import { generatorLayer } from '../animation/defaults'
+import { cycleMs } from '../animation/engine'
 import type { Animation, Layer } from '../animation/types'
-import { LayerEditor } from './LayerEditor'
+import { LAB_DEFAULT_LED_COUNT } from '../config'
 import { LabStrip, type PreviewSettings } from './LabStrip'
+import { LayerEditor } from './LayerEditor'
+import { layerLabel } from './labels'
+import { LayerStack } from './LayerStack'
+import { LibraryPanel } from './LibraryPanel'
 import { PreviewControls } from './PreviewControls'
 import { loadDraft, saveDraft } from './storage'
 import { usePlayback } from './usePlayback'
 
 export function LabApp() {
   const [animation, setAnimation] = useState<Animation>(loadDraft)
+  const [selected, setSelected] = useState(0)
   const [preview, setPreview] = useState<PreviewSettings>({
     ledCount: LAB_DEFAULT_LED_COUNT,
     brightness: 255,
     gamma: true,
     glow: true,
   })
-  const { playing, setPlaying, timeMs, seek } = usePlayback(animation.loopMs)
+  const cycle = cycleMs(animation)
+  const { playing, setPlaying, timeMs, clockMs, seek } = usePlayback(cycle)
 
   useEffect(() => saveDraft(animation), [animation])
 
+  const setLayers = (layers: Layer[]) => setAnimation(a => ({ ...a, layers }))
   const updateLayer = (index: number, layer: Layer) =>
     setAnimation(a => ({ ...a, layers: a.layers.map((l, i) => (i === index ? layer : l)) }))
+
+  const index = Math.min(selected, animation.layers.length - 1)
+  const layer = animation.layers[index]
+  const layerPhase = ((timeMs / animation.loopMs) * layer.speed) % 1
 
   return (
     <main className="lab">
@@ -30,7 +42,7 @@ export function LabApp() {
       </header>
 
       <section className="lab-preview">
-        <LabStrip animation={animation} timeMs={timeMs} settings={preview} />
+        <LabStrip animation={animation} timeMs={timeMs} clockMs={clockMs} settings={preview} />
         <div className="lab-transport">
           <button type="button" onClick={() => setPlaying(p => !p)}>
             {playing ? 'Pause' : 'Play'}
@@ -39,17 +51,17 @@ export function LabApp() {
             className="lab-scrubber"
             type="range"
             min={0}
-            max={animation.loopMs}
+            max={cycle}
             step={1}
             value={timeMs}
-            aria-label="Position in loop"
+            aria-label="Position in cycle"
             onChange={e => {
               setPlaying(false)
               seek(Number(e.target.value))
             }}
           />
           <span className="lab-time">
-            {(timeMs / 1000).toFixed(2)} / {(animation.loopMs / 1000).toFixed(2)} s
+            {(timeMs / 1000).toFixed(2)} / {(cycle / 1000).toFixed(2)} s
           </span>
         </div>
         <PreviewControls settings={preview} onChange={patch => setPreview(p => ({ ...p, ...patch }))} />
@@ -65,20 +77,47 @@ export function LabApp() {
           <input
             type="number"
             min={0.5}
-            max={60}
+            max={600}
             step={0.5}
             value={animation.loopMs / 1000}
             onChange={e => {
               const s = Number(e.target.value)
-              if (s > 0) setAnimation(a => ({ ...a, loopMs: Math.round(s * 1000) }))
+              if (s >= 0.1 && s <= 600) setAnimation(a => ({ ...a, loopMs: Math.round(s * 1000) }))
             }}
           />
         </label>
+        {cycle !== animation.loopMs && (
+          <p className="lab-hint">A ×½ layer needs two loops, so the whole animation repeats every {cycle / 1000} s.</p>
+        )}
+        <LibraryPanel
+          animation={animation}
+          onOpen={a => {
+            setAnimation(a)
+            setSelected(0)
+            seek(0)
+          }}
+        />
       </section>
 
       <section className="lab-panel">
-        <h2>Layer 1</h2>
-        <LayerEditor layer={animation.layers[0]} onChange={layer => updateLayer(0, layer)} />
+        <h2>Layers</h2>
+        <LayerStack
+          layers={animation.layers}
+          selected={index}
+          onSelect={setSelected}
+          onChange={setLayers}
+          onAdd={() => {
+            setLayers([...animation.layers, { ...generatorLayer('sparkle'), blend: 'add' }])
+            setSelected(animation.layers.length)
+          }}
+        />
+      </section>
+
+      <section className="lab-panel">
+        <h2>
+          Layer {index + 1} · {layerLabel(layer)}
+        </h2>
+        <LayerEditor layer={layer} phase={layerPhase} onChange={l => updateLayer(index, l)} />
       </section>
     </main>
   )

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "name": "Fire",
+  "loopMs": 8000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 180,
+            "g": 20,
+            "b": 0
+          },
+          {
+            "r": 255,
+            "g": 120,
+            "b": 0
+          },
+          {
+            "r": 255,
+            "g": 220,
+            "b": 120
+          }
+        ],
+        "scale": 5
+      },
+      "seed": 1234,
+      "freeRunning": false
+    },
+    {
+      "blend": "add",
+      "opacity": 0.6,
+      "speed": 2,
+      "hidden": false,
+      "generator": "sparkle",
+      "params": {
+        "color": {
+          "r": 255,
+          "g": 160,
+          "b": 40
+        },
+        "density": 0.05,
+        "fade": 0.2
+      },
+      "seed": 99,
+      "freeRunning": false
+    }
+  ]
+}

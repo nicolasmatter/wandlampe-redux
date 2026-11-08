@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "name": "Sunrise",
+  "loopMs": 20000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "keyframes": [
+        {
+          "at": 0,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 30
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 10,
+                "g": 0,
+                "b": 60
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.4,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 255,
+                "g": 60,
+                "b": 0
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 200,
+                "g": 0,
+                "b": 90
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.7,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 255,
+                "g": 200,
+                "b": 120
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 255,
+                "g": 170,
+                "b": 80
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,29 +1,30 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-/** Loop-relative playback time in ms. Keeps its position while paused. */
-export function usePlayback(loopMs: number) {
+type Clock = { timeMs: number; clockMs: number }
+
+/**
+ * Playback position within the animation's cycle (`timeMs`), plus a clock that
+ * never wraps (`clockMs`) for free-running layers. Both stop while paused.
+ */
+export function usePlayback(cycleMs: number) {
   const [playing, setPlaying] = useState(true)
-  const [timeMs, setTime] = useState(0)
-  const timeRef = useRef(0)
+  const [clock, setClock] = useState<Clock>({ timeMs: 0, clockMs: 0 })
 
   useEffect(() => {
     if (!playing) return
     let raf = 0
     let last = performance.now()
     const tick = (now: number) => {
-      timeRef.current = (timeRef.current + now - last) % loopMs
+      const dt = now - last
       last = now
-      setTime(timeRef.current)
+      setClock(c => ({ timeMs: (c.timeMs + dt) % cycleMs, clockMs: c.clockMs + dt }))
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [playing, loopMs])
+  }, [playing, cycleMs])
 
-  const seek = (ms: number) => {
-    timeRef.current = Math.min(Math.max(ms, 0), loopMs)
-    setTime(timeRef.current)
-  }
+  const seek = (ms: number) => setClock(c => ({ ...c, timeMs: Math.min(Math.max(ms, 0), cycleMs) }))
 
-  return { playing, setPlaying, timeMs: Math.min(timeMs, loopMs), seek }
+  return { playing, setPlaying, timeMs: Math.min(clock.timeMs, cycleMs), clockMs: clock.clockMs, seek }
 }

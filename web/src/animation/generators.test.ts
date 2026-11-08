@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { render } from './engine'
 import { defaultAnimation, generatorLayer } from './defaults'
-import type { Animation, BandsParams, Layer, PulseParams } from './types'
+import type { Animation, BandsParams, ChaseParams, Layer, PulseParams, RandomFields, SparkleParams } from './types'
 
 const RED = { r: 255, g: 0, b: 0 }
 const BLUE = { r: 0, g: 0, b: 255 }
+const WHITE = { r: 255, g: 255, b: 255 }
 const anim = (layer: Layer): Animation => ({ ...defaultAnimation(), loopMs: 1000, layers: [layer] })
 const bands = (p: Partial<BandsParams>): Animation =>
   anim({ ...generatorLayer('bands'), params: { colors: [RED, BLUE], edge: 'hard', repeat: 1, scroll: 0, ...p } } as Layer)
@@ -77,4 +78,97 @@ describe('pulse', () => {
     expect(new Set(render(a, 300, 46).map(c => c.r)).size).toBe(1)
     expect(render(a, 1000, 46)).toEqual(render(a, 0, 46))
   })
+})
+
+const chase = (p: Partial<ChaseParams>): Animation =>
+  anim({ ...generatorLayer('chase'), params: { color: WHITE, width: 0.1, tail: 0, count: 1, direction: 1, bounce: false, ...p } } as Layer)
+const lit = (leds: { r: number }[]) => leds.flatMap((c, i) => (c.r > 0 ? [i] : []))
+
+describe('chase', () => {
+  // With 20 LEDs, LED i is centered at 0.025 + 0.05 i. Heads are placed on centers to avoid boundary rounding.
+  it('moves its head one strip length per cycle', () => {
+    const a = chase({ width: 0.04 })
+    expect(lit(render(a, 25, 20))).toEqual([0])
+    expect(lit(render(a, 525, 20))).toEqual([10])
+    expect(render(a, 1000, 20)).toEqual(render(a, 0, 20))
+  })
+
+  it('runs backward with direction -1', () => {
+    expect(lit(render(chase({ width: 0.04, direction: -1 }), 475, 20))).toEqual([10])
+  })
+
+  it('fades a tail behind the head only', () => {
+    const leds = render(chase({ width: 0.04, tail: 0.3 }), 525, 20)
+    expect(leds[10].r).toBe(255)
+    expect(leds[7].r).toBeGreaterThan(0)
+    expect(leds[7].r).toBeLessThan(leds[9].r)
+    expect(leds[12].r).toBe(0)
+  })
+
+  it('spaces several dots evenly', () => {
+    expect(lit(render(chase({ count: 2, width: 0.04 }), 275, 20))).toEqual([5, 15])
+  })
+
+  it('bounces back and loops seamlessly', () => {
+    const a = chase({ bounce: true, width: 0.06 })
+    expect(lit(render(a, 262.5, 20))).toEqual([10])
+    expect(lit(render(a, 737.5, 20))).toEqual([10])
+    expect(lit(render(a, 500, 20))).toEqual([19])
+    expect(render(a, 1000, 20)).toEqual(render(a, 0, 20))
+  })
+
+  it('the tail follows the travel direction when bouncing', () => {
+    const a = chase({ bounce: true, width: 0.04, tail: 0.2 })
+    expect(render(a, 262.5, 20)[8].r).toBeGreaterThan(0)
+    expect(render(a, 262.5, 20)[12].r).toBe(0)
+    expect(render(a, 737.5, 20)[12].r).toBeGreaterThan(0)
+    expect(render(a, 737.5, 20)[8].r).toBe(0)
+  })
+})
+
+const sparkle = (over: Partial<SparkleParams> = {}, layer: Partial<RandomFields> = {}): Animation =>
+  anim({ ...generatorLayer('sparkle'), seed: 42, freeRunning: false, params: { color: WHITE, density: 0.3, fade: 0.2, ...over }, ...layer } as Layer)
+const noise = (layer: Partial<RandomFields> = {}): Animation =>
+  anim({ ...generatorLayer('noise'), seed: 7, freeRunning: false, ...layer } as Layer)
+
+describe('random generators', () => {
+  it.each([['sparkle', sparkle()], ['noise', noise()]])('%s is deterministic for a seed', (_, a) => {
+    expect(render(a, 321, 46)).toEqual(render(a, 321, 46))
+  })
+
+  it.each([['sparkle', sparkle()], ['noise', noise()]])('%s loops seamlessly', (_, a) => {
+    expect(render(a, 1000, 46)).toEqual(render(a, 0, 46))
+    expect(render(a, 1250, 46)).toEqual(render(a, 250, 46))
+  })
+
+  it.each([
+    ['sparkle', sparkle({}, { seed: 1 }), sparkle({}, { seed: 2 })],
+    ['noise', noise({ seed: 1 }), noise({ seed: 2 })],
+  ])('%s changes with the seed', (_, a, b) => {
+    expect(render(a, 300, 46)).not.toEqual(render(b, 300, 46))
+  })
+
+  it('sparkle density 0 stays dark and higher density lights more LEDs', () => {
+    const count = (a: Animation) => {
+      let n = 0
+      for (let t = 0; t < 1000; t += 50) n += lit(render(a, t, 46)).length
+      return n
+    }
+    expect(count(sparkle({ density: 0 }))).toBe(0)
+    expect(count(sparkle({ density: 0.6 }))).toBeGreaterThan(count(sparkle({ density: 0.1 })))
+  })
+
+  it('noise stays within the palette brightness range', () => {
+    const leds = render(noise(), 400, 46)
+    expect(Math.max(...leds.map(c => c.r))).toBeLessThanOrEqual(255)
+    expect(new Set(leds.map(c => c.r)).size).toBeGreaterThan(5)
+  })
+
+  it.each([['sparkle', sparkle({}, { freeRunning: true })], ['noise', noise({ freeRunning: true })]])(
+    'free-running %s follows the clock and does not repeat per loop',
+    (_, a) => {
+      expect(render(a, 0, 46, 250)).not.toEqual(render(a, 0, 46, 1250))
+      expect(render(a, 0, 46, 250)).toEqual(render(a, 500, 46, 250))
+    },
+  )
 })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseAnimation, serializeAnimation } from './format'
-import { defaultAnimation, generatorLayer } from './defaults'
+import { animationFileName, parseAnimation, serializeAnimation } from './format'
+import { defaultAnimation, generatorLayer, keyframeLayer } from './defaults'
 
 describe('parseAnimation', () => {
   it('round-trips a valid animation', () => {
@@ -46,5 +46,57 @@ describe('generator params', () => {
     const layer = generatorLayer('pulse')
     const r = parseAnimation(withLayer({ ...layer, params: { ...layer.params, curve: 'square' } }))
     expect(r.ok).toBe(false)
+  })
+})
+
+describe('full format', () => {
+  const withLayer = (layer: unknown) => ({ ...defaultAnimation(), layers: [layer] })
+
+  it('round-trips every generator and a keyframe layer', () => {
+    const a = {
+      ...defaultAnimation(),
+      layers: [generatorLayer('noise'), keyframeLayer(), { ...generatorLayer('chase'), blend: 'add' as const, opacity: 0.5, speed: 2 as const }],
+    }
+    expect(parseAnimation(JSON.parse(serializeAnimation(a)))).toEqual({ ok: true, animation: a })
+    for (const g of ['sparkle', 'noise', 'chase'] as const) expect(parseAnimation(withLayer(generatorLayer(g))).ok).toBe(true)
+  })
+
+  it('requires a seed on random layers', () => {
+    const layer = generatorLayer('sparkle') as Partial<{ seed: number }>
+    delete layer.seed
+    const r = parseAnimation(withLayer(layer))
+    expect(r).toEqual({ ok: false, errors: ['layers[0].seed must be an integer 0–4294967295'] })
+  })
+
+  it('rejects keyframe stops outside the strip', () => {
+    const layer = keyframeLayer()
+    layer.keyframes[0].stops[0].position = 1.5
+    expect(parseAnimation(withLayer(layer))).toEqual({
+      ok: false,
+      errors: ['layers[0].keyframes[0].stops[0].position must be a number 0–1'],
+    })
+  })
+
+  it('rejects two keyframes at the same time', () => {
+    const layer = keyframeLayer()
+    layer.keyframes[1].at = 0
+    const r = parseAnimation(withLayer(layer))
+    expect(r.ok === false && r.errors).toEqual(['layers[0].keyframes[1].at duplicates another keyframe'])
+  })
+
+  it('rejects an unknown speed and a missing name', () => {
+    const r = parseAnimation({ ...defaultAnimation(), name: '', layers: [{ ...generatorLayer('solid'), speed: 3 }] })
+    expect(r.ok === false && r.errors).toEqual([
+      'name must be a non-empty string',
+      'layers[0].speed must be one of 0.5, 1, 2, 4',
+    ])
+  })
+})
+
+describe('animationFileName', () => {
+  it('makes a safe slug', () => {
+    expect(animationFileName('Fire & Ice / Ü')).toBe('fire-ice-u.json')
+    expect(animationFileName('../../etc')).toBe('etc.json')
+    expect(animationFileName('  ')).toBe('untitled.json')
   })
 })

@@ -8,7 +8,9 @@ The browser publishes mode configurations to an MQTT broker. The lamp stores the
 
 - `firmware/`: PlatformIO project, Arduino C++, FastLED, MQTT, NTP, and OTA updates.
 - `web/`: React + TypeScript + Vite controller, with its own npm dependencies.
+- `animations/`: reference animations saved from the Lab, also used as test fixtures.
 - `docs/mqtt.md`: shared protocol and configuration examples.
+- `docs/adr/`: architecture decisions. `GLOSSARY.md` defines the project's terms.
 - `docs/hardware/`: wiring and power-supply diagrams.
 - `specs/`: historical requirements and plans; these predate some implemented features.
 
@@ -27,7 +29,14 @@ Enter MQTT credentials in the browser. Credentials live in session storage; edit
 ```sh
 npm run build
 npm run lint
+npm test
 ```
+
+### Lab
+
+`/lab.html` is the animation test page (see [specs/lab](specs/lab/PRD.md)). Build animations from up to three layers of generators (`solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`) or keyframes, and preview them on a simulated strip. It does not talk to MQTT; the lamp cannot play these animations yet.
+
+With `npm run dev`, **Save** writes `animations/<name>.json` in the repo and **Open** lists those files. The deployed Lab offers JSON download and upload instead. `npm test` checks that every committed animation is valid.
 
 ## Web deployment (Vercel)
 

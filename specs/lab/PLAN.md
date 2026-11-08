@@ -77,9 +77,9 @@ A layer stack of up to three layers, with blend mode, opacity, speed multiplier,
 
 ### Acceptance criteria
 
-- [ ] A fourth layer can't be added
-- [ ] Tests cover `normal` vs `add` blending, opacity, hidden layers, and seamless loops at each speed
-- [ ] Reordering changes the composite as expected
+- [x] A fourth layer can't be added
+- [x] Tests cover `normal` vs `add` blending, opacity, hidden layers, and seamless loops at each speed
+- [x] Reordering changes the composite as expected
 
 ---
 
@@ -93,8 +93,8 @@ A `chase` generator with color, width, tail, count, direction and bounce.
 
 ### Acceptance criteria
 
-- [ ] Comets with tails, multiple dots, and bouncing all work
-- [ ] Tests cover position over time, and that bounce is seamless at the loop boundary
+- [x] Comets with tails, multiple dots, and bouncing all work
+- [x] Tests cover position over time, and that bounce is seamless at the loop boundary
 
 ---
 
@@ -108,10 +108,10 @@ A `chase` generator with color, width, tail, count, direction and bounce.
 
 ### Acceptance criteria
 
-- [ ] For seeded layers, the same seed gives identical output, and t=0 equals t=loop
-- [ ] Reseeding visibly changes the pattern
-- [ ] Free-running layers don't repeat at the loop boundary, and the Lab marks them as approximate
-- [ ] Fire-like and water-like effects are achievable with `noise`
+- [x] For seeded layers, the same seed gives identical output, and t=0 equals t=loop
+- [x] Reseeding visibly changes the pattern
+- [x] Free-running layers don't repeat at the loop boundary, and the Lab marks them as approximate
+- [x] Fire-like and water-like effects are achievable with `noise`
 
 ---
 
@@ -125,9 +125,9 @@ A keyframe layer type: a timeline to add, move and delete keyframes; a strip edi
 
 ### Acceptance criteria
 
-- [ ] Colors and stop positions interpolate between keyframes
-- [ ] Tests cover `linear`, `ease-in-out`, `step` (holds until the next keyframe), and wrap-around from the last keyframe to the first
-- [ ] Keyframe layers combine with generator layers via blending
+- [x] Colors and stop positions interpolate between keyframes
+- [x] Tests cover `linear`, `ease-in-out`, `step` (holds until the next keyframe), and wrap-around from the last keyframe to the first
+- [x] Keyframe layers combine with generator layers via blending
 
 ---
 
@@ -141,7 +141,7 @@ Full format validation with readable errors. A dev-server API to list, open and 
 
 ### Acceptance criteria
 
-- [ ] In dev, save writes `animations/<name>.json`, and open lists and loads the files
-- [ ] The production build has no save API; download/upload works instead
-- [ ] Invalid files show specific errors and don't replace the current animation
-- [ ] Tests: valid files round-trip unchanged; invalid shapes are rejected; all committed animations parse
+- [x] In dev, save writes `animations/<name>.json`, and open lists and loads the files
+- [x] The production build has no save API; download/upload works instead
+- [x] Invalid files show specific errors and don't replace the current animation
+- [x] Tests: valid files round-trip unchanged; invalid shapes are rejected; all committed animations parse
