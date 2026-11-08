@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "name": "Beach day",
+  "loopMs": 8000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "keyframes": [
+        {
+          "at": 0,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.5,
+              "color": {
+                "r": 150,
+                "g": 200,
+                "b": 255
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 40,
+                "g": 110,
+                "b": 230
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 0.5,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 90,
+            "g": 90,
+            "b": 100
+          },
+          {
+            "r": 220,
+            "g": 220,
+            "b": 230
+          }
+        ],
+        "scale": 3,
+        "contrast": 2
+      },
+      "seed": 101,
+      "freeRunning": false
+    },
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "region": {
+        "from": 0.75,
+        "to": 0.25,
+        "softness": 0.04
+      },
+      "generator": "bands",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 60,
+            "b": 120
+          },
+          {
+            "r": 0,
+            "g": 110,
+            "b": 170
+          },
+          {
+            "r": 0,
+            "g": 80,
+            "b": 140
+          },
+          {
+            "r": 20,
+            "g": 140,
+            "b": 180
+          }
+        ],
+        "edge": "smooth",
+        "repeat": 2,
+        "scroll": -1
+      }
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.65,
+        "to": 0.35,
+        "softness": 0.05
+      },
+      "generator": "sparkle",
+      "params": {
+        "color": {
+          "r": 255,
+          "g": 255,
+          "b": 240
+        },
+        "density": 0.1,
+        "fade": 0.2
+      },
+      "seed": 102,
+      "freeRunning": false
+    }
+  ]
+}

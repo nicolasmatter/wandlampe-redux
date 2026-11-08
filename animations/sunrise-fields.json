@@ -1,0 +1,515 @@
+{
+  "version": 1,
+  "name": "Sunrise fields",
+  "loopMs": 40000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "keyframes": [
+        {
+          "at": 0,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.5,
+              "color": {
+                "r": 20,
+                "g": 10,
+                "b": 40
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 2,
+                "g": 2,
+                "b": 15
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.12,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.5,
+              "color": {
+                "r": 20,
+                "g": 10,
+                "b": 40
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 2,
+                "g": 2,
+                "b": 15
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.3,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.5,
+              "color": {
+                "r": 255,
+                "g": 110,
+                "b": 40
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 40,
+                "g": 30,
+                "b": 90
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.55,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.5,
+              "color": {
+                "r": 255,
+                "g": 200,
+                "b": 140
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 90,
+                "g": 150,
+                "b": 230
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.85,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.5,
+              "color": {
+                "r": 120,
+                "g": 180,
+                "b": 255
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 30,
+                "g": 90,
+                "b": 220
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "keyframes": [
+        {
+          "at": 0,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.32,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.42,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.52,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.12,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.32,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.42,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.52,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.25,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.4,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.5,
+              "color": {
+                "r": 255,
+                "g": 110,
+                "b": 20
+              }
+            },
+            {
+              "position": 0.6,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.6,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.7,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.8,
+              "color": {
+                "r": 255,
+                "g": 200,
+                "b": 90
+              }
+            },
+            {
+              "position": 0.9,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.85,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0.82,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            },
+            {
+              "position": 0.92,
+              "color": {
+                "r": 255,
+                "g": 240,
+                "b": 170
+              }
+            },
+            {
+              "position": 1,
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.75,
+        "to": 0.25,
+        "softness": 0.04
+      },
+      "keyframes": [
+        {
+          "at": 0,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 0,
+                "g": 4,
+                "b": 1
+              }
+            },
+            {
+              "position": 0.15,
+              "color": {
+                "r": 1,
+                "g": 8,
+                "b": 2
+              }
+            },
+            {
+              "position": 0.85,
+              "color": {
+                "r": 0,
+                "g": 6,
+                "b": 2
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.12,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 0,
+                "g": 4,
+                "b": 1
+              }
+            },
+            {
+              "position": 0.15,
+              "color": {
+                "r": 1,
+                "g": 8,
+                "b": 2
+              }
+            },
+            {
+              "position": 0.85,
+              "color": {
+                "r": 0,
+                "g": 6,
+                "b": 2
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.3,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 30,
+                "g": 55,
+                "b": 10
+              }
+            },
+            {
+              "position": 0.15,
+              "color": {
+                "r": 55,
+                "g": 75,
+                "b": 15
+              }
+            },
+            {
+              "position": 0.85,
+              "color": {
+                "r": 40,
+                "g": 65,
+                "b": 12
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.55,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 40,
+                "g": 120,
+                "b": 25
+              }
+            },
+            {
+              "position": 0.15,
+              "color": {
+                "r": 80,
+                "g": 150,
+                "b": 35
+              }
+            },
+            {
+              "position": 0.85,
+              "color": {
+                "r": 60,
+                "g": 135,
+                "b": 30
+              }
+            }
+          ]
+        },
+        {
+          "at": 0.85,
+          "easing": "ease-in-out",
+          "edge": "smooth",
+          "stops": [
+            {
+              "position": 0,
+              "color": {
+                "r": 45,
+                "g": 140,
+                "b": 30
+              }
+            },
+            {
+              "position": 0.15,
+              "color": {
+                "r": 95,
+                "g": 170,
+                "b": 40
+              }
+            },
+            {
+              "position": 0.85,
+              "color": {
+                "r": 70,
+                "g": 155,
+                "b": 35
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "blend": "add",
+      "opacity": 0.35,
+      "speed": 4,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.75,
+        "to": 0.25,
+        "softness": 0.04
+      },
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 30,
+            "g": 60,
+            "b": 10
+          },
+          {
+            "r": 90,
+            "g": 140,
+            "b": 40
+          }
+        ],
+        "scale": 6,
+        "contrast": 1.6
+      },
+      "seed": 71,
+      "freeRunning": false
+    }
+  ]
+}
