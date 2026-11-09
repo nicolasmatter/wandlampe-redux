@@ -8,7 +8,7 @@ Durable decisions that apply across all phases:
 
 - **Transport**: animations ride inside the single retained `wandlampe/config` message. Animation mode: `{ type: "animation", brightness, name?, animation: <Lab animation JSON> }`. The string form `animation: "rainbow" | "pulse" | "breathe"` is legacy and converted by the controller.
 - **Limits**: config ≤ 32 KB (firmware MQTT buffer and controller check); 48 LEDs.
-- **Persistence**: last accepted config stored as JSON in flash (LittleFS), re-parsed at boot.
+- **Persistence**: last accepted config stored as JSON on the existing FAT flash partition (FFat), re-parsed at boot.
 - **Engine**: C++ port of `render(animation, time, ledCount, clock) → RGB[]`, pure (no Arduino/FastLED/ArduinoJson), `float` math, testable in a PlatformIO `native` env.
 - **Reference**: fixtures of frames rendered by the TypeScript engine for every committed animation; C++ must match within ±3 per channel, ≤2% of samples allowed beyond.
 - **Errors**: bad animation mode is skipped (black); `wandlampe/status` carries `errors: [{ mode, error }]`.
@@ -45,7 +45,7 @@ The firmware accepts the new animation mode shape, parses the embedded animation
 
 - [ ] A hand-published config with a `solid`/`bands` animation mode plays on the lamp
 - [ ] Config survives reboot and OTA; first boot after this change falls back to the retained MQTT config
-- [ ] Native tests cover parsing an animation mode and a 30 KB config
+- [x] Native tests cover parsing an animation mode and a 30 KB config
 - [ ] Other mode types behave as before
 
 ---

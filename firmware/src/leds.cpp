@@ -1,15 +1,26 @@
 #include "leds.h"
 #include <Arduino.h>
 #include <FastLED.h>
-#include <Preferences.h>
 #include <time.h>
+#include <animation.h>
 #include "config.h"
+#include "config_store.h"
 #include "connectivity.h"
+#include "psram_allocator.h"
 
 static CRGB leds[NUM_LEDS];
 static ModesConfig modesConfig;
 static bool connected = false;
-static Preferences prefs;
+// The accepted config payload, kept to re-read the active mode's animation.
+static char* configJson = nullptr;
+static size_t configJsonLen = 0;
+
+static anim::Animation activeAnimation;
+static bool animationReady = false;
+static bool animationStale = true;
+static unsigned long animationStartMs = 0;
+static unsigned long lastFrameMs = 0;
+static const unsigned long FRAME_MS = 16;  // ~60 fps
 
 static int cycleIndex = 0;
 static int activeMode = -1;
@@ -26,24 +37,30 @@ static CRGB toCrgb(const LedRGB& c) {
   return CRGB(c.r, c.g, c.b);
 }
 
-static void saveConfig() {
-  prefs.begin("wl", false);
-  prefs.putBytes("cfg", &modesConfig, sizeof(modesConfig));
-  prefs.end();
+static bool parseJson(const char* json, size_t len, JsonDocument& doc) {
+  return deserializeJson(doc, json, len) == DeserializationError::Ok;
 }
 
-static bool loadConfig() {
-  prefs.begin("wl", true);
-  bool ok = prefs.getBytesLength("cfg") == sizeof(modesConfig);
-  if (ok) prefs.getBytes("cfg", &modesConfig, sizeof(modesConfig));
-  prefs.end();
-  return ok;
+// Re-reads the active mode's embedded animation and restarts it from t=0.
+static void loadActiveAnimation() {
+  animationStale = false;
+  animationReady = false;
+  animationStartMs = millis();
+  if (activeMode < 0 || (uint8_t)activeMode >= modesConfig.numModes) return;
+  if (!modesConfig.modes[activeMode].embeddedAnimation || !configJson) return;
+
+  JsonDocument doc(PsramAllocator::instance());
+  anim::ParseError error;
+  if (!parseJson(configJson, configJsonLen, doc)) return;
+  animationReady = parseModeAnimation(doc, activeMode, activeAnimation, error);
+  if (!animationReady) Serial.printf("LEDs: %s\n", error.message);
 }
 
 static void setActiveMode(int mode) {
   if (mode == activeMode) return;
   activeMode = mode;
   modeChanged = true;
+  animationStale = true;
 }
 
 static int modeFromCycleIndex() {
@@ -75,7 +92,22 @@ static void renderOff() {
   fill_solid(leds, NUM_LEDS, CRGB::Black);
 }
 
+static void renderEmbeddedAnimation() {
+  if (!animationReady) {
+    renderOff();
+    return;
+  }
+  static anim::Rgb8 frame[NUM_LEDS];
+  unsigned long now = millis();
+  anim::render(activeAnimation, now - animationStartMs, now, frame, NUM_LEDS);
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
+}
+
 static void renderAnimation(const LedMode& mode) {
+  if (mode.embeddedAnimation) {
+    renderEmbeddedAnimation();
+    return;
+  }
   switch (mode.animation) {
     case ANIM_RAINBOW:
       fill_rainbow(leds, NUM_LEDS, (millis() / 20) % 256, 7);
@@ -196,12 +228,21 @@ void ledsSetup() {
   lastSwitchState = digitalRead(SWITCH_PIN);
   runBootTest();
 
-  if (loadConfig()) {
-    Serial.printf("LEDs: restored %u mode(s) from NVS\n", modesConfig.numModes);
+  configStoreSetup();
+  size_t len = 0;
+  char* stored = configStoreLoad(&len);
+  if (stored) {
+    anim::ParseError error;
+    if (ledsApplyConfigJson(stored, len, error)) {
+      Serial.printf("LEDs: restored %u mode(s) from flash\n", modesConfig.numModes);
+    } else {
+      Serial.printf("LEDs: stored config rejected: %s\n", error.message);
+    }
+    free(stored);
   }
 }
 
-void ledsApplyConfig(const ModesConfig& cfg) {
+static void applyConfig(const ModesConfig& cfg) {
   int previousMode = activeMode;
   modesConfig = cfg;
   if (modesConfig.numModes > MAX_MODES) modesConfig.numModes = MAX_MODES;
@@ -218,7 +259,33 @@ void ledsApplyConfig(const ModesConfig& cfg) {
     cycleIndex = 0;
     setActiveMode(-1);
   }
-  saveConfig();
+  animationStale = true;
+}
+
+bool ledsApplyConfigJson(const char* json, size_t len, anim::ParseError& error) {
+  JsonDocument doc(PsramAllocator::instance());
+  if (!parseJson(json, len, doc)) {
+    snprintf(error.message, sizeof(error.message), "config is not valid JSON");
+    return false;
+  }
+  static ModesConfig cfg;
+  if (!parseModesConfig(doc, cfg, error)) return false;
+
+  bool unchanged = configJson && configJsonLen == len && memcmp(configJson, json, len) == 0;
+  if (!unchanged) {
+    char* copy = (char*)ps_malloc(len);
+    if (!copy) {
+      snprintf(error.message, sizeof(error.message), "config does not fit in memory");
+      return false;
+    }
+    memcpy(copy, json, len);
+    free(configJson);
+    configJson = copy;
+    configJsonLen = len;
+    if (!configStoreSave(json, len)) Serial.println("LEDs: could not store config in flash");
+  }
+  applyConfig(cfg);
+  return true;
 }
 
 void ledsSetConnected(bool isConnected) {
@@ -243,6 +310,11 @@ void ledsUpdate() {
     dismissAlarmIfLeaving(prevActiveMode);
     prevActiveMode = activeMode;
   }
+  if (animationStale) loadActiveAnimation();
+
+  unsigned long now = millis();
+  if (now - lastFrameMs < FRAME_MS) return;
+  lastFrameMs = now;
 
   if (activeMode >= 0 && (uint8_t)activeMode < modesConfig.numModes) {
     renderMode(modesConfig.modes[activeMode]);

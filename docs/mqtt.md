@@ -33,12 +33,22 @@ The current model supports 1–8 modes and 48 LEDs. Mode order determines physic
 | `static` | `leds`: 48 RGB objects in strip order; shorter arrays are padded with black |
 | `single-color` | `color`: RGB object |
 | `gradient` | `from`, `to`: RGB objects |
-| `animation` | `animation`: `rainbow`, `pulse`, or `breathe`; `color` for pulse/breathe |
+| `animation` | `animation`: a Lab animation object (see below); legacy: the name `rainbow`, `pulse`, or `breathe`, with `color` for pulse/breathe |
 | `alarm-clock` | `hour`, `minute`, `color` |
 
 `name` is web metadata, retained by the broker but ignored by the firmware. The web app always sends per-mode brightness. Both parsers also accept the legacy single-mode shape `{"brightness":128,"leds":[...]}` with 48 RGB entries. Firmware additionally supports top-level brightness as a fallback for entries in `modes`; the web modes parser does not.
 
-Applying configuration saves it to firmware NVS and resets the lamp to off. Reboot restores mode definitions, not the active mode. The switch activates modes; there is no remote mode-selection command.
+### Embedded animations
+
+An `animation` mode can carry a full Lab animation, the same JSON as the files in `animations/` (format in `web/src/animation/types.ts`, rationale in ADR 0001):
+
+```json
+{"name": "Rainbow", "type": "animation", "brightness": 128, "animation": {"version": 1, "name": "Rainbow", "loopMs": 6000, "layers": [...]}}
+```
+
+The whole config, animations included, must stay under 32 KB (the firmware's MQTT buffer). The firmware validates each embedded animation with the same rules as the Lab and rejects the config with a path-specific error on serial output, such as `modes[1].animation.layers[0].params.repeat must be an integer 1–16`. Generators and layer features not yet ported to the firmware are rejected as `not supported by this firmware yet`. Selecting the mode starts its animation from the beginning; brightness is applied on top.
+
+Applying configuration stores it in the firmware's flash and keeps the active mode if it still exists; otherwise the lamp turns off. Reboot restores mode definitions, not the active mode. The switch activates modes; there is no remote mode-selection command.
 
 ## Device status
 
@@ -58,4 +68,4 @@ Web previews are approximate: brightness is not applied, rainbow spacing differs
 
 ## Storage and editing
 
-Firmware saves configuration in NVS; the broker retains the published configuration; the browser saves edits in local storage. Any received configuration replaces the browser's current modes, including unpublished edits. There is no configuration version or conflict-resolution mechanism.
+Firmware saves the configuration payload as a file on its flash FAT partition; the broker retains the published configuration; the browser saves edits in local storage. Any received configuration replaces the browser's current modes, including unpublished edits. There is no configuration version or conflict-resolution mechanism.
