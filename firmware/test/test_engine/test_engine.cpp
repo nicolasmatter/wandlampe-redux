@@ -24,7 +24,6 @@ int hexByte(const char* s) {
 }
 
 struct Result {
-  bool supported;
   int samples;
   int outliers;
   int worst;
@@ -35,20 +34,16 @@ Result compareCase(const char* json, char* name, size_t nameLen) {
   TEST_ASSERT_EQUAL_MESSAGE(DeserializationError::Ok, deserializeJson(doc, json).code(), "fixture JSON");
   snprintf(name, nameLen, "%s @ %d LEDs", doc["name"].as<const char*>(), doc["ledCount"].as<int>());
 
-  anim::Animation animation;
+  static anim::Animation animation;
   anim::ParseError error;
   if (!anim::parseAnimation(doc["animation"], animation, error)) {
-    // Not ported yet: fine while the engine grows, as long as the parser says so.
-    if (!strstr(error.message, "not supported")) {
-      char message[256];
-      snprintf(message, sizeof(message), "%s: %s", name, error.message);
-      TEST_FAIL_MESSAGE(message);
-    }
-    return {false, 0, 0, 0};
+    char message[256];
+    snprintf(message, sizeof(message), "%s: %s", name, error.message);
+    TEST_FAIL_MESSAGE(message);
   }
 
   int ledCount = doc["ledCount"];
-  Result result{true, 0, 0, 0};
+  Result result{0, 0, 0};
   anim::Rgb8 leds[anim::kMaxLeds];
   for (JsonObjectConst frame : doc["frames"].as<JsonArrayConst>()) {
     anim::render(animation, frame["timeMs"], frame["clockMs"], leds, ledCount);
@@ -67,22 +62,15 @@ Result compareCase(const char* json, char* name, size_t nameLen) {
 }
 
 void test_matches_reference_frames() {
-  int supported = 0;
   for (int i = 0; i < kReferenceCaseCount; i++) {
     char name[128];
     Result r = compareCase(kReferenceCases[i], name, sizeof(name));
-    if (!r.supported) {
-      printf("  skipped  %s\n", name);
-      continue;
-    }
-    supported++;
     printf("  checked  %s (worst diff %d, %d/%d outliers)\n", name, r.worst, r.outliers, r.samples);
     char message[200];
     snprintf(message, sizeof(message), "%s: %d of %d channel samples differ by more than %d", name, r.outliers,
              r.samples, kTolerance);
     TEST_ASSERT_TRUE_MESSAGE(r.outliers <= r.samples * kOutlierShare, message);
   }
-  TEST_ASSERT_GREATER_THAN_MESSAGE(0, supported, "no reference case is supported");
 }
 
 void test_rejects_unknown_generator() {
@@ -116,6 +104,34 @@ void test_rejects_newer_version() {
   TEST_ASSERT_EQUAL_STRING("version must be 1", error.message);
 }
 
+void test_accepts_range_boundaries() {
+  JsonDocument doc;
+  deserializeJson(doc, R"({"version":1,"name":"x","loopMs":1000,"layers":[
+    {"blend":"normal","opacity":1,"speed":0.5,"hidden":false,"mirror":true,"region":{"from":0.25,"to":0.75,"softness":0.5},
+     "generator":"drops","seed":4294967295,"freeRunning":true,
+     "params":{"color":{"r":0,"g":0,"b":0},"rate":40,"speed":0.2,"variation":0.9,"length":0.5}},
+    {"blend":"add","opacity":0,"speed":4,"hidden":false,"mirror":false,"generator":"sparkle","seed":0,"freeRunning":false,
+     "params":{"color":{"r":255,"g":255,"b":255},"density":1,"fade":0.01}},
+    {"blend":"add","opacity":1,"speed":1,"hidden":false,"mirror":false,"generator":"ripple","seed":1,"freeRunning":false,
+     "params":{"color":{"r":1,"g":2,"b":3},"rate":16,"speed":0.1,"width":0.3,"life":0.05}}]})");
+  static anim::Animation animation;
+  anim::ParseError error;
+  TEST_ASSERT_TRUE_MESSAGE(anim::parseAnimation(doc.as<JsonVariantConst>(), animation, error), error.message);
+  TEST_ASSERT_EQUAL_UINT32(4294967295u, animation.layers[0].seed);
+}
+
+void test_rejects_duplicate_keyframe_times() {
+  JsonDocument doc;
+  deserializeJson(doc, R"({"version":1,"name":"x","loopMs":1000,"layers":[
+    {"blend":"normal","opacity":1,"speed":1,"hidden":false,"mirror":false,"keyframes":[
+      {"at":0.5,"easing":"step","edge":"hard","stops":[{"position":0,"color":{"r":0,"g":0,"b":0}}]},
+      {"at":0.5,"easing":"linear","edge":"smooth","stops":[{"position":0,"color":{"r":0,"g":0,"b":0}}]}]}]})");
+  static anim::Animation animation;
+  anim::ParseError error;
+  TEST_ASSERT_FALSE(anim::parseAnimation(doc.as<JsonVariantConst>(), animation, error));
+  TEST_ASSERT_EQUAL_STRING("layers[0].keyframes[1].at duplicates another keyframe", error.message);
+}
+
 }  // namespace
 
 void setUp() {}
@@ -127,5 +143,7 @@ int main() {
   RUN_TEST(test_rejects_unknown_generator);
   RUN_TEST(test_rejects_out_of_range_param_with_path);
   RUN_TEST(test_rejects_newer_version);
+  RUN_TEST(test_accepts_range_boundaries);
+  RUN_TEST(test_rejects_duplicate_keyframe_times);
   return UNITY_END();
 }

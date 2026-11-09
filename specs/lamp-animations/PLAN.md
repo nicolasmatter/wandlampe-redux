@@ -60,8 +60,8 @@ Port `pulse`, `chase`, `sparkle`, `noise`, `strike`, `drops`, `ripple`, the seed
 
 ### Acceptance criteria
 
-- [ ] Fixtures for single-region committed animations pass
-- [ ] Parser rejects unknown generators and out-of-range values with path-specific errors
+- [x] Fixtures for single-region committed animations pass
+- [x] Parser rejects unknown generators and out-of-range values with path-specific errors
 - [ ] Free-running layers run on the lamp without repeating at the loop
 
 ---
@@ -76,7 +76,7 @@ Port mirror, regions with softness, `normal`/`add` blending, opacity and up to s
 
 ### Acceptance criteria
 
-- [ ] Fixtures for every committed animation pass, including the split ones
+- [x] Fixtures for every committed animation pass, including the split ones
 - [ ] Render time for the heaviest committed animation is measured on the lamp and stays well under a 16 ms frame
 
 ---

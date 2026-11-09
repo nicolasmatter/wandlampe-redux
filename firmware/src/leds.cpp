@@ -98,8 +98,19 @@ static void renderEmbeddedAnimation() {
     return;
   }
   static anim::Rgb8 frame[NUM_LEDS];
+  static uint32_t frames = 0, totalUs = 0, worstUs = 0;
   unsigned long now = millis();
+  uint32_t start = micros();
   anim::render(activeAnimation, now - animationStartMs, now, frame, NUM_LEDS);
+  uint32_t took = micros() - start;
+
+  // Report the render cost every 10 s, to check the ~16 ms frame budget.
+  totalUs += took;
+  if (took > worstUs) worstUs = took;
+  if (++frames == 600) {
+    Serial.printf("LEDs: render avg %lu us, worst %lu us\n", (unsigned long)(totalUs / frames), (unsigned long)worstUs);
+    frames = totalUs = worstUs = 0;
+  }
   for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
 }
 

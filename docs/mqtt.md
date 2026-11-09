@@ -46,7 +46,7 @@ An `animation` mode can carry a full Lab animation, the same JSON as the files i
 {"name": "Rainbow", "type": "animation", "brightness": 128, "animation": {"version": 1, "name": "Rainbow", "loopMs": 6000, "layers": [...]}}
 ```
 
-The whole config, animations included, must stay under 32 KB (the firmware's MQTT buffer). The firmware validates each embedded animation with the same rules as the Lab and rejects the config with a path-specific error on serial output, such as `modes[1].animation.layers[0].params.repeat must be an integer 1–16`. Generators and layer features not yet ported to the firmware are rejected as `not supported by this firmware yet`. Selecting the mode starts its animation from the beginning; brightness is applied on top.
+The whole config, animations included, must stay under 32 KB (the firmware's MQTT buffer). The firmware validates each embedded animation with the same rules as the Lab and rejects the config with a path-specific error on serial output, such as `modes[1].animation.layers[0].params.repeat must be an integer 1–16`. Selecting the mode starts its animation from the beginning; brightness is applied on top.
 
 Applying configuration stores it in the firmware's flash and keeps the active mode if it still exists; otherwise the lamp turns off. Reboot restores mode definitions, not the active mode. The switch activates modes; there is no remote mode-selection command.
 
