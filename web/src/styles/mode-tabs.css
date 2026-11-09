@@ -107,3 +107,7 @@
     grid-column: span 6;
   }
 }
+
+.mode-tab.lamp-error {
+  border: 1px solid var(--color-danger-border);
+}

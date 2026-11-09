@@ -14,22 +14,35 @@ static unsigned long lastReconnectAttempt = 0;
 static void publishStatus(bool online) {
   JsonDocument doc;
   doc["status"] = online ? "online" : "offline";
-  if (online) doc["activeMode"] = ledsGetActiveMode();
+  if (online) {
+    doc["activeMode"] = ledsGetActiveMode();
+    // Modes the lamp skips (shown black), and why.
+    JsonArray errors = doc["errors"].to<JsonArray>();
+    for (int i = 0; i < ledsModeCount(); i++) {
+      const char* problem = ledsModeProblem(i);
+      if (!problem) continue;
+      JsonObject e = errors.add<JsonObject>();
+      e["mode"] = i;
+      e["error"] = problem;
+    }
+    if (const char* configError = ledsConfigError()) doc["configError"] = configError;
+  }
 
-  char buf[64];
-  serializeJson(doc, buf, sizeof(buf));
-  mqttClient.publish(MQTT_TOPIC_STATUS, buf, true);
+  static char buf[2048];
+  size_t len = serializeJson(doc, buf, sizeof(buf));
+  mqttClient.publish(MQTT_TOPIC_STATUS, (const uint8_t*)buf, len, true);
 }
 
 static void onMessage(char* topic, byte* payload, unsigned int len) {
   if (strcmp(topic, MQTT_TOPIC_CONFIG) != 0) return;
 
   anim::ParseError error;
-  if (!ledsApplyConfigJson((const char*)payload, len, error)) {
+  if (ledsApplyConfigJson((const char*)payload, len, error)) {
+    Serial.println("MQTT: config applied");
+  } else {
     Serial.printf("MQTT: invalid config: %s\n", error.message);
-    return;
   }
-  Serial.println("MQTT: config applied");
+  publishStatus(true);
 }
 
 static bool connect() {

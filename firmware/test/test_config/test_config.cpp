@@ -38,21 +38,27 @@ void test_reads_embedded_animation_mode() {
   TEST_ASSERT_EQUAL(3, animation.layers[0].bands.colorCount);
 }
 
-void test_rejects_former_builtin_animation_names() {
+void test_skips_former_builtin_animation_names() {
   JsonDocument doc;
-  TEST_ASSERT_FALSE(parse(doc, R"({"modes":[{"type":"animation","brightness":128,"animation":"breathe",
+  TEST_ASSERT_TRUE(parse(doc, R"({"modes":[{"type":"animation","brightness":128,"animation":"breathe",
     "color":{"r":1,"g":2,"b":3}}]})"));
-  TEST_ASSERT_EQUAL_STRING("modes[0].animation must be an object", error.message);
+  TEST_ASSERT_TRUE(cfg.modes[0].skipped);
+  TEST_ASSERT_EQUAL_STRING("modes[0].animation must be an object", cfg.modes[0].problem.message);
 }
 
-void test_invalid_embedded_animation_names_mode_and_field() {
+void test_skips_invalid_animation_mode_with_its_path() {
   JsonDocument doc;
   std::string bad = kRainbow;
   bad.replace(bad.find("\"repeat\":1"), 10, "\"repeat\":0");
   std::string json = std::string(R"({"modes":[{"type":"single-color","color":{"r":0,"g":0,"b":0}},
     {"type":"animation","animation":)") + bad + "}]}";
-  TEST_ASSERT_FALSE(parse(doc, json));
-  TEST_ASSERT_EQUAL_STRING("modes[1].animation.layers[0].params.repeat must be an integer 1–16", error.message);
+  // The bad mode is skipped; the others still apply.
+  TEST_ASSERT_TRUE(parse(doc, json));
+  TEST_ASSERT_EQUAL(2, cfg.numModes);
+  TEST_ASSERT_FALSE(cfg.modes[0].skipped);
+  TEST_ASSERT_TRUE(cfg.modes[1].skipped);
+  TEST_ASSERT_EQUAL_STRING("modes[1].animation.layers[0].params.repeat must be an integer 1–16",
+                           cfg.modes[1].problem.message);
 }
 
 void test_reads_a_30kb_config() {
@@ -71,6 +77,14 @@ void test_reads_a_30kb_config() {
   TEST_ASSERT_TRUE_MESSAGE(parse(doc, json), error.message);
   TEST_ASSERT_EQUAL(MAX_MODES, cfg.numModes);
   TEST_ASSERT_TRUE(parseModeAnimation(doc, MAX_MODES - 1, animation, error));
+}
+
+void test_skips_modes_with_missing_fields() {
+  JsonDocument doc;
+  TEST_ASSERT_TRUE(parse(doc, R"({"modes":[{"type":"gradient","from":{"r":1,"g":1,"b":1}},{"type":"static"}]})"));
+  TEST_ASSERT_TRUE(cfg.modes[0].skipped);
+  TEST_ASSERT_EQUAL_STRING("modes[0].from and .to must be RGB objects", cfg.modes[0].problem.message);
+  TEST_ASSERT_EQUAL_STRING("modes[1].leds must be an array of RGB objects", cfg.modes[1].problem.message);
 }
 
 void test_pads_short_led_arrays_with_black() {
@@ -98,9 +112,10 @@ void tearDown() {}
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_reads_embedded_animation_mode);
-  RUN_TEST(test_rejects_former_builtin_animation_names);
-  RUN_TEST(test_invalid_embedded_animation_names_mode_and_field);
+  RUN_TEST(test_skips_former_builtin_animation_names);
+  RUN_TEST(test_skips_invalid_animation_mode_with_its_path);
   RUN_TEST(test_reads_a_30kb_config);
+  RUN_TEST(test_skips_modes_with_missing_fields);
   RUN_TEST(test_pads_short_led_arrays_with_black);
   RUN_TEST(test_rejects_config_without_modes);
   return UNITY_END();

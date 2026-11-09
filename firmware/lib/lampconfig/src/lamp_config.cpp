@@ -95,9 +95,9 @@ bool parseModesConfig(JsonVariantConst doc, ModesConfig& cfg, anim::ParseError& 
   if (!modesArr.isNull()) {
     for (JsonVariantConst modeObj : modesArr) {
       if (cfg.numModes >= MAX_MODES) break;
-      if (!parseModeObject(modeObj.as<JsonObjectConst>(), doc, cfg.numModes, cfg.modes[cfg.numModes], error)) {
-        return false;
-      }
+      LedMode& mode = cfg.modes[cfg.numModes];
+      mode.problem.message[0] = '\0';
+      mode.skipped = !parseModeObject(modeObj.as<JsonObjectConst>(), doc, cfg.numModes, mode, mode.problem);
       cfg.numModes++;
     }
     if (cfg.numModes == 0) setError(error, "modes must not be empty");

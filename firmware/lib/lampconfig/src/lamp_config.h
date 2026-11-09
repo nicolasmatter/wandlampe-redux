@@ -30,6 +30,9 @@ struct LedMode {
   LedRGB  from;
   LedRGB  to;
   LedRGB  leds[NUM_LEDS];
+  // The lamp can't play this mode and shows it black; `problem` says why.
+  bool skipped;
+  anim::ParseError problem;
 };
 
 struct ModesConfig {
@@ -39,7 +42,8 @@ struct ModesConfig {
 
 // Reads a whole config. Animation modes embed a Lab animation, which is
 // validated but not kept: it is large, so the player re-reads the active one
-// with parseModeAnimation().
+// with parseModeAnimation(). A mode the lamp can't play is kept but marked
+// `skipped`, so the others still apply. Fails only if the config has no modes.
 bool parseModesConfig(JsonVariantConst doc, ModesConfig& cfg, anim::ParseError& error);
 
 // Reads the animation embedded in mode `index` of a config accepted by parseModesConfig().

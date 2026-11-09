@@ -125,8 +125,8 @@ Firmware skips modes it can't play, shows them black, and publishes the reasons 
 ### Acceptance criteria
 
 - [ ] A config with one bad mode applies the others and reports `{ mode, error }`
-- [ ] The controller marks the bad mode with the lamp's error
-- [ ] Native tests cover skipped modes and error texts; `docs/mqtt.md` documents the status field
+- [x] The controller marks the bad mode with the lamp's error
+- [x] Native tests cover skipped modes and error texts; `docs/mqtt.md` documents the status field
 
 ---
 

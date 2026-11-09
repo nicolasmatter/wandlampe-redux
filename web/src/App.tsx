@@ -135,7 +135,9 @@ export default function App() {
   }
 
   const activeMode = modes[activeModeIndex];
-  const { online, activeMode: deviceActiveMode } = deviceStatus;
+  const { online, activeMode: deviceActiveMode, errors: lampErrors, configError } = deviceStatus;
+  // Only meaningful while the editor shows what the lamp received.
+  const lampProblem = dirty ? undefined : lampErrors.find((p) => p.mode === activeModeIndex);
   const size = configSize(modes);
 
   let deviceModeLabel = "unknown";
@@ -192,7 +194,7 @@ export default function App() {
             <button
               key={i}
               type="button"
-              className={`mode-tab ${i === activeModeIndex ? "active" : ""} ${deviceActiveMode === i ? "live" : ""}`}
+              className={`mode-tab ${i === activeModeIndex ? "active" : ""} ${deviceActiveMode === i ? "live" : ""} ${!dirty && lampErrors.some((p) => p.mode === i) ? "lamp-error" : ""}`}
               onClick={() => setActiveModeIndex(i)}
             >
               <LedStrip mode={mode} compact />
@@ -288,6 +290,12 @@ export default function App() {
           )}
         </div>
 
+        {lampProblem && (
+          <p className="lamp-problem" role="alert">
+            The lamp skips this mode and shows it black: {lampProblem.error}
+          </p>
+        )}
+
         <ModeTypeEditor
           mode={activeMode}
           brushColor={brushColor}
@@ -321,6 +329,11 @@ export default function App() {
           >
             {dirty ? "Apply all modes (unsaved to lamp)" : "Apply all modes"}
           </button>
+          {configError && (
+            <p className="save-hint error">
+              The lamp rejected the last config: {configError}
+            </p>
+          )}
           {!size.fits && (
             <p className="save-hint error">
               The modes add up to {Math.ceil(size.bytes / 1024)} KB; the lamp

@@ -15,6 +15,8 @@ static bool connected = false;
 static char* configJson = nullptr;
 static size_t configJsonLen = 0;
 
+static anim::ParseError configError = {""};
+
 static anim::Animation activeAnimation;
 static bool animationReady = false;
 static bool animationStale = true;
@@ -47,7 +49,8 @@ static void loadActiveAnimation() {
   animationReady = false;
   animationStartMs = millis();
   if (activeMode < 0 || (uint8_t)activeMode >= modesConfig.numModes) return;
-  if (modesConfig.modes[activeMode].type != MODE_ANIMATION || !configJson) return;
+  const LedMode& mode = modesConfig.modes[activeMode];
+  if (mode.type != MODE_ANIMATION || mode.skipped || !configJson) return;
 
   JsonDocument doc(PsramAllocator::instance());
   anim::ParseError error;
@@ -164,6 +167,10 @@ static void dismissAlarmIfLeaving(int fromMode) {
 
 static void renderMode(const LedMode& mode) {
   FastLED.setBrightness(mode.brightness);
+  if (mode.skipped) {
+    renderOff();
+    return;
+  }
   switch (mode.type) {
     case MODE_SINGLE_COLOR: renderSingleColor(mode); break;
     case MODE_GRADIENT:     renderGradient(mode);    break;
@@ -246,7 +253,20 @@ static void applyConfig(const ModesConfig& cfg) {
   animationStale = true;
 }
 
+static bool acceptConfigJson(const char* json, size_t len, anim::ParseError& error);
+
 bool ledsApplyConfigJson(const char* json, size_t len, anim::ParseError& error) {
+  bool ok = acceptConfigJson(json, len, error);
+  configError = ok ? anim::ParseError{""} : error;
+  if (ok) {
+    for (int i = 0; i < modesConfig.numModes; i++) {
+      if (modesConfig.modes[i].skipped) Serial.printf("LEDs: skipping %s\n", modesConfig.modes[i].problem.message);
+    }
+  }
+  return ok;
+}
+
+static bool acceptConfigJson(const char* json, size_t len, anim::ParseError& error) {
   JsonDocument doc(PsramAllocator::instance());
   if (!parseJson(json, len, doc)) {
     snprintf(error.message, sizeof(error.message), "config is not valid JSON");
@@ -278,6 +298,19 @@ void ledsSetConnected(bool isConnected) {
 
 int ledsGetActiveMode() {
   return activeMode;
+}
+
+int ledsModeCount() {
+  return modesConfig.numModes;
+}
+
+const char* ledsModeProblem(int index) {
+  if (index < 0 || index >= modesConfig.numModes || !modesConfig.modes[index].skipped) return nullptr;
+  return modesConfig.modes[index].problem.message;
+}
+
+const char* ledsConfigError() {
+  return configError.message[0] ? configError.message : nullptr;
 }
 
 bool ledsTakeModeChange(int* outMode) {

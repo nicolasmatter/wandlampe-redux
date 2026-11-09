@@ -3,9 +3,16 @@ import mqtt from 'mqtt'
 import type { MqttClient } from 'mqtt'
 import { BROKER_URL, MAX_MODES, TOPIC_CONFIG, TOPIC_STATUS } from './config'
 import { configPayload, parseMode } from './modeUtils'
-import type { DeviceStatus, Mode } from './types'
+import type { DeviceStatus, Mode, ModeProblem } from './types'
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
+
+function parseProblems(raw: unknown): ModeProblem[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter(
+    (p): p is ModeProblem => typeof p?.mode === 'number' && typeof p?.error === 'string',
+  )
+}
 
 /** True if the config still names the lamp's former hardcoded animations. */
 function hasLegacyAnimations(payload: string): boolean {
@@ -40,7 +47,7 @@ function parseModes(payload: string): Mode[] | null {
 export function useMqtt(username: string, password: string) {
   const clientRef = useRef<MqttClient | null>(null)
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
-  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({ online: null, activeMode: null })
+  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({ online: null, activeMode: null, errors: [], configError: null })
   const [retainedModes, setRetainedModes] = useState<Mode[] | null>(null)
   // The retained config used the former hardcoded animations; they were converted and need publishing.
   const [retainedConverted, setRetainedConverted] = useState(false)
@@ -66,6 +73,8 @@ export function useMqtt(username: string, password: string) {
           setDeviceStatus({
             online: msg.status === 'online',
             activeMode: typeof msg.activeMode === 'number' ? msg.activeMode : null,
+            errors: parseProblems(msg.errors),
+            configError: typeof msg.configError === 'string' ? msg.configError : null,
           })
         } catch {}
       }

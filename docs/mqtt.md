@@ -46,7 +46,7 @@ An `animation` mode can carry a full Lab animation, the same JSON as the files i
 {"name": "Rainbow", "type": "animation", "brightness": 128, "animation": {"version": 1, "name": "Rainbow", "loopMs": 6000, "layers": [...]}}
 ```
 
-The whole config, animations included, must stay under 32 KB (the firmware's MQTT buffer). The firmware validates each embedded animation with the same rules as the Lab and rejects the config with a path-specific error on serial output, such as `modes[1].animation.layers[0].params.repeat must be an integer 1–16`. Selecting the mode starts its animation from the beginning; brightness is applied on top.
+The whole config, animations included, must stay under 32 KB (the firmware's MQTT buffer). The firmware validates each mode, embedded animations with the same rules as the Lab. A mode it can't play is skipped and shows black, while the other modes still apply; the reason is reported on `wandlampe/status` with its path, such as `modes[1].animation.layers[0].params.repeat must be an integer 1–16`. Selecting the mode starts its animation from the beginning; brightness is applied on top.
 
 The firmware no longer has built-in animations. Older configs named them (`"animation": "rainbow"`, `"pulse"` or `"breathe"`, with `color`); the web controller converts those to equivalent embedded animations when it loads the retained config and asks for Apply. The firmware rejects the old names.
 
@@ -55,10 +55,10 @@ Applying configuration stores it in the firmware's flash and keeps the active mo
 ## Device status
 
 ```json
-{"status":"online","activeMode":0}
+{"status":"online","activeMode":0,"errors":[{"mode":1,"error":"modes[1].animation must be an object"}]}
 ```
 
-`activeMode` is a zero-based index; `-1` means off. Firmware publishes status on connection and mode changes. Its retained last will is `{"status":"offline"}`.
+`activeMode` is a zero-based index; `-1` means off. `errors` lists the modes the lamp skips (shows black) and why. `configError` appears when the last received config was rejected as a whole (invalid JSON, no modes, out of memory); the lamp then keeps its previous config. Firmware publishes status on connection, mode changes and every received config. Its retained last will is `{"status":"offline"}`.
 
 The web Apply action does not wait for a device acknowledgement. Receiving a configuration echo from the broker confirms neither device receipt nor rendering.
 
