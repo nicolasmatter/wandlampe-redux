@@ -160,11 +160,15 @@ export default function App() {
         <h1>w-r</h1>
         <form onSubmit={handleLogin}>
           <input
+            name="username"
+            autoComplete="username"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
           <input
+            name="password"
+            autoComplete="current-password"
             placeholder="Password"
             type="password"
             value={password}
