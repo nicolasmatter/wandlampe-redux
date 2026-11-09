@@ -14,5 +14,5 @@ void loop() {
   connectivityHandle();
   mqttHandle();
   ledsSetConnected(mqttConnected());
-  ledsUpdate();
+  delay(1);  // let lower-priority tasks run; the LEDs render in their own task
 }

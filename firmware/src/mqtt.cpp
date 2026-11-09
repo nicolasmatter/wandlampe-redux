@@ -15,17 +15,18 @@ static void publishStatus(bool online) {
   JsonDocument doc;
   doc["status"] = online ? "online" : "offline";
   if (online) {
-    doc["activeMode"] = ledsGetActiveMode();
+    static LedsStatus leds;
+    ledsGetStatus(leds);
+    doc["activeMode"] = leds.activeMode;
     // Modes the lamp skips (shown black), and why.
     JsonArray errors = doc["errors"].to<JsonArray>();
-    for (int i = 0; i < ledsModeCount(); i++) {
-      const char* problem = ledsModeProblem(i);
-      if (!problem) continue;
+    for (int i = 0; i < leds.modeCount; i++) {
+      if (!leds.problems[i].message[0]) continue;
       JsonObject e = errors.add<JsonObject>();
       e["mode"] = i;
-      e["error"] = problem;
+      e["error"] = leds.problems[i].message;
     }
-    if (const char* configError = ledsConfigError()) doc["configError"] = configError;
+    if (leds.configError.message[0]) doc["configError"] = leds.configError.message;
   }
 
   static char buf[2048];

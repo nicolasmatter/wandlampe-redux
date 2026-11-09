@@ -50,7 +50,7 @@ The whole config, animations included, must stay under 32 KB (the firmware's MQT
 
 The firmware no longer has built-in animations. Older configs named them (`"animation": "rainbow"`, `"pulse"` or `"breathe"`, with `color`); the web controller converts those to equivalent embedded animations when it loads the retained config and asks for Apply. The firmware rejects the old names.
 
-Applying configuration stores it in the firmware's flash and keeps the active mode if it still exists; otherwise the lamp turns off. Reboot restores mode definitions, not the active mode. The switch activates modes; there is no remote mode-selection command.
+Applying configuration stores it in the firmware's flash and keeps the active mode if it still exists; otherwise the lamp turns off. Reboot restores mode definitions, not the active mode. The switch activates modes; there is no remote mode-selection command. Every mode change, including switching on and off, crossfades over 300 ms.
 
 ## Device status
 
