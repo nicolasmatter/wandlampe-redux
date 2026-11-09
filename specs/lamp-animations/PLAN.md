@@ -26,10 +26,10 @@ A pure C++ engine on the host that renders `solid` and `bands` layers, a script 
 
 ### Acceptance criteria
 
-- [ ] Reference-frame export script runs from `web/` and writes fixtures for chosen animations, times and LED counts
-- [ ] PlatformIO `native` test env builds the engine without Arduino
-- [ ] `solid` and `bands` animations match their fixtures within tolerance
-- [ ] Firmware builds for the board unchanged in behavior
+- [x] Reference-frame export script runs from `web/` and writes fixtures for chosen animations, times and LED counts
+- [x] PlatformIO `native` test env builds the engine without Arduino
+- [x] `solid` and `bands` animations match their fixtures within tolerance
+- [x] Firmware builds for the board unchanged in behavior
 
 ---
 

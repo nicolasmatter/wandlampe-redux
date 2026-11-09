@@ -79,6 +79,13 @@ pio run -d firmware -e arduino_nano_esp32_ota -t upload
 
 Pins, LED count, MQTT topics, and timing constants are in `firmware/include/config.h`. Credentials must not be committed.
 
+`firmware/lib/animation` is the C++ port of the Lab's animation engine. Its host tests compare it with frames rendered by the TypeScript engine; regenerate those after changing either engine or `animations/`:
+
+```sh
+npm --prefix web run fixtures
+pio test -d firmware -e native
+```
+
 ## Working across both projects
 
 When changing modes or MQTT messages, update both implementations and `docs/mqtt.md` together. Run the web build/lint and firmware build; physical switch, LED output, alarm timing, and OTA behavior also need hardware verification.
