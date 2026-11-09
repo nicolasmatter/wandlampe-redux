@@ -5,7 +5,7 @@ type Props = {
   onChange: (patch: Partial<PreviewSettings>) => void
 }
 
-const LED_COUNTS = [24, 46, 60, 144]
+const LED_COUNTS = [24, 48, 60, 144]
 
 export function PreviewControls({ settings, onChange }: Props) {
   return (

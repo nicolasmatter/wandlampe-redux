@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "config.h"
 
 struct LedRGB {
   uint8_t r, g, b;
@@ -28,10 +29,8 @@ struct LedMode {
   LedRGB  color;
   LedRGB  from;
   LedRGB  to;
-  LedRGB  leds[24];
+  LedRGB  leds[NUM_LEDS];
 };
-
-#define MAX_MODES 8
 
 struct ModesConfig {
   uint8_t numModes;

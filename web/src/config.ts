@@ -1,6 +1,6 @@
 export const BROKER_URL = 'wss://vps.nicolasmatter.ch:9001'
 export const TOPIC_CONFIG = 'wandlampe/config'
 export const TOPIC_STATUS = 'wandlampe/status'
-export const LED_COUNT = 24
+export const LED_COUNT = 48
 export const MAX_MODES = 8
-export const LAB_DEFAULT_LED_COUNT = 46
+export const LAB_DEFAULT_LED_COUNT = 48

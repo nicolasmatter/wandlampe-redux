@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { LED_COUNT } from '../config'
 import { modePreviewLeds, rgbToHex } from '../modeUtils'
 import type { Mode, RGB } from '../types'
 
@@ -31,6 +32,7 @@ export function LedStrip({ mode, editable, onPaint, onPaintStart, onPaintEnd, co
   return (
     <div
       className={`led-strip ${editable ? 'editable' : 'preview'} ${compact ? 'compact' : ''}`}
+      style={{ '--led-count': LED_COUNT } as CSSProperties}
       onPointerLeave={onPaintEnd}
     >
       {leds.map((led: RGB, i) => (

@@ -1,6 +1,6 @@
 # Wandlampe
 
-Firmware and web controller for an Arduino Nano ESP32 wall lamp: a ring of WS2812B LEDs mounted flat on the wall, facing outward. The firmware in this branch still assumes 24 LEDs; the lamp has 46.
+Firmware and web controller for an Arduino Nano ESP32 wall lamp: a ring of 48 WS2812B LEDs mounted flat on the wall, facing outward.
 
 The browser publishes mode configurations to an MQTT broker. The lamp stores them in flash, and its physical toggle switch cycles through off → mode 1 → off → mode 2 → … . Selecting a mode in the web editor does not activate it on the lamp.
 
@@ -85,4 +85,4 @@ When changing modes or MQTT messages, update both implementations and `docs/mqtt
 
 The web repository was imported with its complete Git history. Its pre-existing local edits were copied into `web/`; the original sibling checkout remains untouched. An obsolete self-referencing Git submodule entry was removed during consolidation.
 
-This migration starts from the local 24-LED firmware revision. A pre-existing commit on `origin/master` (`ceed774`) changes the firmware to 46 LEDs and adjusts configuration handling; reconcile it with the web model and fixed-size firmware arrays before merging that change.
+The LED count is `NUM_LEDS` in `firmware/include/config.h` and `LED_COUNT` in `web/src/config.ts`; change both together. Changing it resizes the firmware's stored config, so the lamp ignores its saved NVS copy once and waits for the retained MQTT config.

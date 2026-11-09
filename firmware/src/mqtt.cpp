@@ -19,8 +19,9 @@ static bool parseColor(JsonObject obj, LedRGB& color) {
   return true;
 }
 
+// Shorter arrays (from configs saved for fewer LEDs) are padded with black.
 static bool parseLedArray(JsonArray arr, LedMode& mode) {
-  if (!arr || arr.size() < NUM_LEDS) return false;
+  if (!arr) return false;
   for (int i = 0; i < NUM_LEDS; i++) {
     mode.leds[i].r = arr[i]["r"] | 0;
     mode.leds[i].g = arr[i]["g"] | 0;

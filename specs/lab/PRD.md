@@ -17,7 +17,7 @@ This PRD covers stage 1 only: the Lab and its animation engine. Firmware and pro
 ### Previewing
 
 1. As the lamp owner, I want to see an animation play on a simulated strip, so that I can judge it without touching the lamp.
-2. As the lamp owner, I want the preview to default to 46 LEDs and let me pick another count, so that I see the real lamp and can check animations stay correct on other strips.
+2. As the lamp owner, I want the preview to default to 48 LEDs and let me pick another count, so that I see the real lamp and can check animations stay correct on other strips.
 3. As the lamp owner, I want a brightness slider applied like FastLED applies it, so that dim animations look the way they will on the lamp.
 4. As the lamp owner, I want gamma correction and a glow toggle (on by default), so that the preview resembles diffused WS2812B LEDs more than raw screen pixels.
 5. As the lamp owner, I want to play, pause, and scrub through the loop, so that I can inspect a specific moment.
@@ -71,7 +71,7 @@ This PRD covers stage 1 only: the Lab and its animation engine. Firmware and pro
 - **Seamless looping.** For any animation that isn't free-running, render at `t = 0` equals render at the end of the cycle: `loopMs`, or `2 × loopMs` when a layer runs at ×½. Noise is sampled on a closed path so it wraps.
 - **Free-running layers** use the wall-clock time instead of loop time, and a non-fixed seed. The engine stays pure because time and seed are inputs.
 - **Dev-only save API.** A small Vite dev-server plugin lists, reads and writes `animations/*.json` at the repo root. The production build doesn't include it; the Lab detects its absence and falls back to download and upload.
-- **LED count** is a Lab setting, 46 by default, in shared config. Animation files never contain a count.
+- **LED count** is a Lab setting, 48 by default, in shared config. Animation files never contain a count.
 - **Relation to modes (stage 2, informative).** A mode will embed a full copy of an animation; there's no animation library in the config.
 
 ## Testing Decisions
@@ -81,7 +81,7 @@ This PRD covers stage 1 only: the Lab and its animation engine. Firmware and pro
 - **Engine tests:**
   - Loop seamlessness
   - Determinism for a fixed seed
-  - Count independence: the same animation at 24 and 46 LEDs samples consistently at matching relative positions
+  - Count independence: the same animation at 24 and 48 LEDs samples consistently at matching relative positions
   - Each generator's defining property, such as `solid` being uniform and `step` easing holding until the next keyframe
   - `normal` vs `add` blending and opacity
   - Hidden layers have no effect

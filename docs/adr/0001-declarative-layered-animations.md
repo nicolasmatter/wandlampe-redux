@@ -5,7 +5,7 @@ Animations are described as data: a shared loop, up to six layers (raised from t
 ## Considered Options
 
 - **JS code per animation**: most flexible, but the ESP32 cannot run it, and baking it to frames gives up the small, count-independent format. We dropped it.
-- **Per-pixel frames or keyframes**: simple, but payloads grow with LED count and frame count, and break when the strip length changes (24 → 46 already happened).
+- **Per-pixel frames or keyframes**: simple, but payloads grow with LED count and frame count, and break when the strip length changes (24 → 46 → 48 already happened).
 - **Hardcoded firmware presets only**: the status quo (`rainbow`, `pulse`, `breathe`); every new animation needs a flash.
 
 ## Consequences

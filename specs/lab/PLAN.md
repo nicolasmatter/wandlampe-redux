@@ -11,7 +11,7 @@ Durable decisions that apply across all phases:
 - **Format**: parse unknown JSON → `Animation` or errors; serialize back. The schema is `{ version, name, loopMs, layers[1..3] }`. A layer is `{ blend: normal|add, opacity 0–1, speed 0.5|1|2|4, hidden }` plus either `{ generator, params, seed?, freeRunning? }` or `{ keyframes: [{ at 0–1, easing: linear|ease-in-out|step, edge: smooth|hard, stops: [{ position 0–1, color }] }] }`.
 - **Generators**: `solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`. All positions and widths are relative to the strip (0–1).
 - **Storage**: `animations/*.json` at the repo root, written only through a dev-server API. The deployed Lab uses download/upload. Local storage keeps the current work.
-- **Defaults**: 46 LEDs, glow on.
+- **Defaults**: 48 LEDs, glow on.
 - **Tests**: Vitest, behavior-level, covering only the engine and the format.
 
 ---
@@ -22,7 +22,7 @@ Durable decisions that apply across all phases:
 
 ### What to build
 
-Opening `/lab.html` shows a 46-LED strip playing a one-layer `solid` animation with an editable loop length and color, and play/pause. The engine and a minimal format parser exist with their first tests. The current animation survives a page reload.
+Opening `/lab.html` shows a 48-LED strip playing a one-layer `solid` animation with an editable loop length and color, and play/pause. The engine and a minimal format parser exist with their first tests. The current animation survives a page reload.
 
 ### Acceptance criteria
 
@@ -40,7 +40,7 @@ Opening `/lab.html` shows a 46-LED strip playing a one-layer `solid` animation w
 
 ### What to build
 
-Preview controls: LED count (46 by default), brightness scaled like FastLED, gamma correction, a glow toggle (on by default), and a scrubber across the loop while paused.
+Preview controls: LED count (48 by default), brightness scaled like FastLED, gamma correction, a glow toggle (on by default), and a scrubber across the loop while paused.
 
 ### Acceptance criteria
 

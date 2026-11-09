@@ -15,7 +15,7 @@ The firmware retries MQTT every ten minutes. The web client currently disables a
 
 ## Configuration
 
-The current model supports 1–8 modes and 24 LEDs. Mode order determines physical switch order. Brightness and RGB channels use integers from 0 through 255; alarm hours use 0–23 and minutes use 0–59. These are intended ranges, not a guarantee of strict validation by either parser.
+The current model supports 1–8 modes and 48 LEDs. Mode order determines physical switch order. Brightness and RGB channels use integers from 0 through 255; alarm hours use 0–23 and minutes use 0–59. These are intended ranges, not a guarantee of strict validation by either parser.
 
 ```json
 {
@@ -30,13 +30,13 @@ The current model supports 1–8 modes and 24 LEDs. Mode order determines physic
 
 | Type | Additional fields |
 | --- | --- |
-| `static` | `leds`: 24 RGB objects in strip order |
+| `static` | `leds`: 48 RGB objects in strip order; shorter arrays are padded with black |
 | `single-color` | `color`: RGB object |
 | `gradient` | `from`, `to`: RGB objects |
 | `animation` | `animation`: `rainbow`, `pulse`, or `breathe`; `color` for pulse/breathe |
 | `alarm-clock` | `hour`, `minute`, `color` |
 
-`name` is web metadata, retained by the broker but ignored by the firmware. The web app always sends per-mode brightness. Both parsers also accept the legacy single-mode shape `{"brightness":128,"leds":[...]}` with 24 RGB entries. Firmware additionally supports top-level brightness as a fallback for entries in `modes`; the web modes parser does not.
+`name` is web metadata, retained by the broker but ignored by the firmware. The web app always sends per-mode brightness. Both parsers also accept the legacy single-mode shape `{"brightness":128,"leds":[...]}` with 48 RGB entries. Firmware additionally supports top-level brightness as a fallback for entries in `modes`; the web modes parser does not.
 
 Applying configuration saves it to firmware NVS and resets the lamp to off. Reboot restores mode definitions, not the active mode. The switch activates modes; there is no remote mode-selection command.
 
