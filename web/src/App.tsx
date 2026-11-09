@@ -1,4 +1,4 @@
-import { LED_COUNT, MAX_MODES } from "./config";
+import { LED_COUNT, MAX_CONFIG_BYTES, MAX_MODES } from "./config";
 import type { Mode, ModeType } from "./types";
 import {
   ModeTypeEditor,
@@ -10,6 +10,7 @@ import {
   cloneModes,
   createMode,
   defaultModes,
+  configSize,
   hexToRgb,
   loadLocalModes,
   saveLocalModes,
@@ -41,7 +42,7 @@ export default function App() {
   const isPainting = useRef(false);
   const skipDirty = useRef(true);
 
-  const { status, deviceStatus, retainedModes, publish } = useMqtt(
+  const { status, deviceStatus, retainedModes, retainedConverted, publish } = useMqtt(
     authed ? username : "",
     authed ? password : "",
   );
@@ -51,10 +52,10 @@ export default function App() {
       skipDirty.current = true;
       setModes(cloneModes(retainedModes));
       setActiveModeIndex(0);
-      setDirty(false);
+      setDirty(retainedConverted);
       saveLocalModes(retainedModes);
     }
-  }, [retainedModes]);
+  }, [retainedModes, retainedConverted]);
 
   useEffect(() => {
     saveLocalModes(modes);
@@ -135,6 +136,7 @@ export default function App() {
 
   const activeMode = modes[activeModeIndex];
   const { online, activeMode: deviceActiveMode } = deviceStatus;
+  const size = configSize(modes);
 
   let deviceModeLabel = "unknown";
   if (online === false) deviceModeLabel = "offline";
@@ -310,7 +312,7 @@ export default function App() {
           <button
             type="button"
             className="apply"
-            disabled={status !== "connected"}
+            disabled={status !== "connected" || !size.fits}
             onClick={() => {
               publish(modes);
               skipDirty.current = true;
@@ -319,6 +321,19 @@ export default function App() {
           >
             {dirty ? "Apply all modes (unsaved to lamp)" : "Apply all modes"}
           </button>
+          {!size.fits && (
+            <p className="save-hint error">
+              The modes add up to {Math.ceil(size.bytes / 1024)} KB; the lamp
+              accepts at most {Math.floor(MAX_CONFIG_BYTES / 1024)} KB. Remove a
+              mode or pick a smaller animation.
+            </p>
+          )}
+          {retainedConverted && dirty && (
+            <p className="save-hint">
+              The lamp's old built-in animations were converted to Lab
+              animations. Click Apply to send them to the lamp.
+            </p>
+          )}
           {dirty && status === "connected" && (
             <p className="save-hint">
               Changes saved in this browser. Click Apply to send them to the

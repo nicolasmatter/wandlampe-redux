@@ -30,7 +30,6 @@ void test_reads_embedded_animation_mode() {
   TEST_ASSERT_TRUE_MESSAGE(parse(doc, json), error.message);
   TEST_ASSERT_EQUAL(2, cfg.numModes);
   TEST_ASSERT_EQUAL(MODE_ANIMATION, cfg.modes[1].type);
-  TEST_ASSERT_TRUE(cfg.modes[1].embeddedAnimation);
   TEST_ASSERT_EQUAL(200, cfg.modes[1].brightness);
 
   TEST_ASSERT_TRUE_MESSAGE(parseModeAnimation(doc, 1, animation, error), error.message);
@@ -39,12 +38,11 @@ void test_reads_embedded_animation_mode() {
   TEST_ASSERT_EQUAL(3, animation.layers[0].bands.colorCount);
 }
 
-void test_legacy_animation_name_is_not_embedded() {
+void test_rejects_former_builtin_animation_names() {
   JsonDocument doc;
-  TEST_ASSERT_TRUE(parse(doc, R"({"modes":[{"type":"animation","brightness":128,"animation":"breathe",
+  TEST_ASSERT_FALSE(parse(doc, R"({"modes":[{"type":"animation","brightness":128,"animation":"breathe",
     "color":{"r":1,"g":2,"b":3}}]})"));
-  TEST_ASSERT_FALSE(cfg.modes[0].embeddedAnimation);
-  TEST_ASSERT_EQUAL(ANIM_BREATHE, cfg.modes[0].animation);
+  TEST_ASSERT_EQUAL_STRING("modes[0].animation must be an object", error.message);
 }
 
 void test_invalid_embedded_animation_names_mode_and_field() {
@@ -55,13 +53,6 @@ void test_invalid_embedded_animation_names_mode_and_field() {
     {"type":"animation","animation":)") + bad + "}]}";
   TEST_ASSERT_FALSE(parse(doc, json));
   TEST_ASSERT_EQUAL_STRING("modes[1].animation.layers[0].params.repeat must be an integer 1–16", error.message);
-}
-
-void test_non_object_animation_reports_mode() {
-  JsonDocument doc;
-  TEST_ASSERT_TRUE(parse(doc, R"({"modes":[{"type":"animation","animation":"rainbow"}]})"));
-  TEST_ASSERT_FALSE(parseModeAnimation(doc, 0, animation, error));
-  TEST_ASSERT_EQUAL_STRING("modes[0].animation must be an object", error.message);
 }
 
 void test_reads_a_30kb_config() {
@@ -107,9 +98,8 @@ void tearDown() {}
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_reads_embedded_animation_mode);
-  RUN_TEST(test_legacy_animation_name_is_not_embedded);
+  RUN_TEST(test_rejects_former_builtin_animation_names);
   RUN_TEST(test_invalid_embedded_animation_names_mode_and_field);
-  RUN_TEST(test_non_object_animation_reports_mode);
   RUN_TEST(test_reads_a_30kb_config);
   RUN_TEST(test_pads_short_led_arrays_with_black);
   RUN_TEST(test_rejects_config_without_modes);

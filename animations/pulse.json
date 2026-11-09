@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "name": "Pulse",
+  "loopMs": 1000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "pulse",
+      "params": {
+        "color": {
+          "r": 255,
+          "g": 255,
+          "b": 255
+        },
+        "min": 0,
+        "max": 255,
+        "curve": "sine"
+      }
+    }
+  ]
+}

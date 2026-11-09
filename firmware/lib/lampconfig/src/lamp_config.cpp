@@ -36,12 +36,6 @@ uint8_t parseModeType(const char* typeStr) {
   return MODE_STATIC;
 }
 
-uint8_t parseAnimationId(const char* animStr) {
-  if (strcmp(animStr, "pulse") == 0)   return ANIM_PULSE;
-  if (strcmp(animStr, "breathe") == 0) return ANIM_BREATHE;
-  return ANIM_RAINBOW;
-}
-
 // Validates an embedded animation; its errors get the mode's path in front.
 bool checkEmbeddedAnimation(JsonVariantConst json, int index, anim::ParseError& error) {
   static anim::Animation scratch;  // large once keyframes are ported; keep it off the stack
@@ -53,8 +47,6 @@ bool parseModeObject(JsonObjectConst modeObj, JsonVariantConst doc, int index, L
   const char* typeStr = modeObj["type"] | "static";
   mode.type = parseModeType(typeStr);
   mode.brightness = modeObj["brightness"] | doc["brightness"] | 255;
-  mode.animation = ANIM_RAINBOW;
-  mode.embeddedAnimation = false;
   mode.color = {255, 255, 255};
   mode.from = {0, 0, 0};
   mode.to = {255, 255, 255};
@@ -74,18 +66,9 @@ bool parseModeObject(JsonObjectConst modeObj, JsonVariantConst doc, int index, L
       }
       snprintf(error.message, sizeof(error.message), "%s.from and .to must be RGB objects", path);
       return false;
-    case MODE_ANIMATION: {
-      JsonVariantConst animation = modeObj["animation"];
-      if (animation.is<JsonObjectConst>()) {
-        mode.embeddedAnimation = true;
-        return checkEmbeddedAnimation(doc, index, error);
-      }
-      mode.animation = parseAnimationId(animation | "rainbow");
-      if (mode.animation != ANIM_RAINBOW) {
-        parseColor(modeObj["color"].as<JsonObjectConst>(), mode.color);
-      }
-      return true;
-    }
+    case MODE_ANIMATION:
+      // The former built-in names ("rainbow", ...) are rejected: the controller converts them.
+      return checkEmbeddedAnimation(doc, index, error);
     case MODE_ALARM_CLOCK:
       mode.alarmHour = modeObj["hour"] | 7;
       mode.alarmMinute = modeObj["minute"] | 0;

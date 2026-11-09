@@ -1,5 +1,8 @@
-import { LED_COUNT, MAX_MODES } from './config'
-import type { AnimationId, Mode, ModeType, RGB } from './types'
+import { cycleMs, render } from './animation/engine'
+import { parseAnimation } from './animation/format'
+import { LED_COUNT, MAX_CONFIG_BYTES, MAX_MODES } from './config'
+import { defaultLampAnimation, legacyAnimation } from './lampAnimations'
+import type { Mode, ModeType, RGB } from './types'
 
 const BLACK: RGB = { r: 0, g: 0, b: 0 }
 const WHITE: RGB = { r: 255, g: 255, b: 255 }
@@ -36,9 +39,11 @@ function parseModeType(raw: unknown): ModeType {
   return 'static'
 }
 
-function parseAnimation(raw: unknown): AnimationId {
-  if (raw === 'rainbow' || raw === 'pulse' || raw === 'breathe') return raw
-  return 'rainbow'
+/** An embedded Lab animation, or one of the former hardcoded animations converted. */
+function parseModeAnimation(raw: unknown, color: RGB | null) {
+  if (typeof raw === 'string') return legacyAnimation(raw, color ?? WHITE)
+  const result = parseAnimation(raw)
+  return result.ok ? result.animation : null
 }
 
 export function parseMode(raw: unknown, index: number): Mode | null {
@@ -63,12 +68,10 @@ export function parseMode(raw: unknown, index: number): Mode | null {
       if (!from || !to) return null
       return { ...base, from, to }
     }
-    case 'animation':
-      return {
-        ...base,
-        animation: parseAnimation(o.animation),
-        color: parseRgb(o.color) ?? WHITE,
-      }
+    case 'animation': {
+      const animation = parseModeAnimation(o.animation, parseRgb(o.color))
+      return animation ? { ...base, animation } : null
+    }
     case 'alarm-clock':
       return {
         ...base,
@@ -113,27 +116,6 @@ function scaleRgb(color: RGB, scale: number): RGB {
   }
 }
 
-function hsvToRgb(h: number, s: number, v: number): RGB {
-  const c = (v * s) / 255 / 255
-  const x = c * (1 - Math.abs(((h / 255) * 6) % 2 - 1))
-  const m = v / 255 - c
-  let r = 0, g = 0, b = 0
-  const sector = Math.floor(h / 255 * 6)
-  switch (sector) {
-    case 0: r = c; g = x; break
-    case 1: r = x; g = c; break
-    case 2: g = c; b = x; break
-    case 3: g = x; b = c; break
-    case 4: r = x; b = c; break
-    default: r = c; b = x; break
-  }
-  return {
-    r: Math.round((r + m) * 255),
-    g: Math.round((g + m) * 255),
-    b: Math.round((b + m) * 255),
-  }
-}
-
 export function modePreviewLeds(mode: Mode, tick = 0): RGB[] {
   switch (mode.type) {
     case 'single-color':
@@ -147,25 +129,8 @@ export function modePreviewLeds(mode: Mode, tick = 0): RGB[] {
       })
     }
     case 'animation': {
-      const color = mode.color ?? WHITE
-      if (mode.animation === 'rainbow') {
-        const offset = Math.floor(tick / 20) % 256
-        return Array.from({ length: LED_COUNT }, (_, i) => {
-          const hue = (offset + Math.round((i / LED_COUNT) * 255)) % 256
-          return hsvToRgb(hue, 255, 255)
-        })
-      }
-      if (mode.animation === 'pulse') {
-        const scale = 0.5 + 0.5 * Math.sin(TAU * tick / 1000)
-        const c = scaleRgb(color, scale)
-        return Array(LED_COUNT).fill(c)
-      }
-      if (mode.animation === 'breathe') {
-        const scale = 0.5 + 0.5 * Math.sin(TAU * tick / 3000)
-        const c = scaleRgb(color, scale)
-        return Array(LED_COUNT).fill(c)
-      }
-      return Array(LED_COUNT).fill(color)
+      if (!mode.animation) return emptyLeds()
+      return render(mode.animation, tick % cycleMs(mode.animation), LED_COUNT, tick)
     }
     case 'alarm-clock': {
       const color = mode.color ?? ORANGE
@@ -210,8 +175,7 @@ export function modeToPayload(mode: Mode): Record<string, unknown> {
       payload.to = mode.to
       break
     case 'animation':
-      payload.animation = mode.animation ?? 'rainbow'
-      if (mode.animation !== 'rainbow') payload.color = mode.color ?? WHITE
+      payload.animation = mode.animation ?? defaultLampAnimation()
       break
     case 'alarm-clock':
       payload.hour = mode.hour ?? 7
@@ -236,7 +200,7 @@ export function changeModeType(mode: Mode, type: ModeType): Mode {
     case 'gradient':
       return { ...base, from: preview[0], to: preview[preview.length - 1] }
     case 'animation':
-      return { ...base, animation: 'rainbow', color: preview[0] }
+      return { ...base, animation: defaultLampAnimation() }
     case 'alarm-clock':
       return { ...base, hour: 7, minute: 0, color: preview[0] }
     case 'static':
@@ -252,7 +216,7 @@ export function createMode(type: ModeType, index: number): Mode {
     case 'gradient':
       return { ...base, from: { r: 255, g: 0, b: 0 }, to: { r: 0, g: 0, b: 255 } }
     case 'animation':
-      return { ...base, animation: 'rainbow', color: WHITE }
+      return { ...base, animation: defaultLampAnimation() }
     case 'alarm-clock':
       return { ...base, hour: 7, minute: 0, color: ORANGE }
     case 'static':
@@ -263,12 +227,23 @@ export function createMode(type: ModeType, index: number): Mode {
 export function defaultModes(): Mode[] {
   return [
     { name: 'White', type: 'single-color', brightness: 128, color: WHITE },
-    { name: 'Rainbow', type: 'animation', brightness: 128, animation: 'rainbow', color: WHITE },
+    { name: 'Rainbow', type: 'animation', brightness: 128, animation: defaultLampAnimation() },
   ]
 }
 
 export function emptyMode(index: number): Mode {
   return createMode('static', index)
+}
+
+/** The retained config message for these modes. */
+export function configPayload(modes: Mode[]): string {
+  return JSON.stringify({ modes: modes.map(modeToPayload) })
+}
+
+/** Size of the config message in bytes, and whether the lamp can receive it. */
+export function configSize(modes: Mode[]): { bytes: number; fits: boolean } {
+  const bytes = new TextEncoder().encode(configPayload(modes)).length
+  return { bytes, fits: bytes <= MAX_CONFIG_BYTES }
 }
 
 export function formatAlarmTime(hour = 7, minute = 0) {

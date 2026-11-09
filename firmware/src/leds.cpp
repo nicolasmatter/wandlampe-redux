@@ -47,7 +47,7 @@ static void loadActiveAnimation() {
   animationReady = false;
   animationStartMs = millis();
   if (activeMode < 0 || (uint8_t)activeMode >= modesConfig.numModes) return;
-  if (!modesConfig.modes[activeMode].embeddedAnimation || !configJson) return;
+  if (modesConfig.modes[activeMode].type != MODE_ANIMATION || !configJson) return;
 
   JsonDocument doc(PsramAllocator::instance());
   anim::ParseError error;
@@ -114,33 +114,6 @@ static void renderEmbeddedAnimation() {
   for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
 }
 
-static void renderAnimation(const LedMode& mode) {
-  if (mode.embeddedAnimation) {
-    renderEmbeddedAnimation();
-    return;
-  }
-  switch (mode.animation) {
-    case ANIM_RAINBOW:
-      fill_rainbow(leds, NUM_LEDS, (millis() / 20) % 256, 7);
-      break;
-    case ANIM_PULSE: {
-      CRGB c = toCrgb(mode.color);
-      uint8_t scale = (uint8_t)(127.5f + 127.5f * sin(TWO_PI * millis() / 1000.0f));
-      fill_solid(leds, NUM_LEDS, c.nscale8(scale));
-      break;
-    }
-    case ANIM_BREATHE: {
-      CRGB c = toCrgb(mode.color);
-      uint8_t scale = (uint8_t)(127.5f + 127.5f * sin(TWO_PI * millis() / 3000.0f));
-      fill_solid(leds, NUM_LEDS, c.nscale8(scale));
-      break;
-    }
-    default:
-      fill_solid(leds, NUM_LEDS, CRGB::Black);
-      break;
-  }
-}
-
 static void renderAlarmClock(const LedMode& mode) {
   struct tm now;
   if (!connectivityGetLocalTime(&now)) {
@@ -194,7 +167,7 @@ static void renderMode(const LedMode& mode) {
   switch (mode.type) {
     case MODE_SINGLE_COLOR: renderSingleColor(mode); break;
     case MODE_GRADIENT:     renderGradient(mode);    break;
-    case MODE_ANIMATION:    renderAnimation(mode);   break;
+    case MODE_ANIMATION:    renderEmbeddedAnimation(); break;
     case MODE_ALARM_CLOCK:  renderAlarmClock(mode); break;
     case MODE_STATIC:
     default:                renderStatic(mode);      break;

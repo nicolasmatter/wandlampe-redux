@@ -92,9 +92,9 @@ The mode editor's animation type offers the committed animations bundled at buil
 ### Acceptance criteria
 
 - [ ] Picking a committed animation and applying it plays it on the lamp
-- [ ] Uploading an invalid file shows the Lab's errors and changes nothing
-- [ ] Publishing a config over 32 KB is refused with a clear message
-- [ ] Vitest covers the round trip of a mode with an animation and the size check
+- [x] Uploading an invalid file shows the Lab's errors and changes nothing
+- [x] Publishing a config over 32 KB is refused with a clear message
+- [x] Vitest covers the round trip of a mode with an animation and the size check
 
 ---
 
@@ -108,9 +108,9 @@ The controller converts legacy `rainbow`/`pulse`/`breathe` modes to equivalent a
 
 ### Acceptance criteria
 
-- [ ] Loading a legacy config shows animation modes that look like the old presets
-- [ ] Firmware has no preset animation code; alarm clock unchanged
-- [ ] Vitest covers legacy conversion
+- [x] Loading a legacy config shows animation modes that look like the old presets
+- [x] Firmware has no preset animation code; alarm clock unchanged
+- [x] Vitest covers legacy conversion
 
 ---
 

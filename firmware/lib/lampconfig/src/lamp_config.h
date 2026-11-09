@@ -21,19 +21,9 @@ enum ModeType : uint8_t {
   MODE_ALARM_CLOCK  = 4,
 };
 
-// Legacy hardcoded animations, used when a mode names one instead of embedding an animation.
-enum AnimationId : uint8_t {
-  ANIM_RAINBOW = 0,
-  ANIM_PULSE   = 1,
-  ANIM_BREATHE = 2,
-};
-
 struct LedMode {
   uint8_t type;
   uint8_t brightness;
-  uint8_t animation;
-  // An animation mode carrying a Lab animation; read it with parseModeAnimation().
-  bool embeddedAnimation;
   uint8_t alarmHour;
   uint8_t alarmMinute;
   LedRGB  color;
@@ -47,8 +37,9 @@ struct ModesConfig {
   LedMode modes[MAX_MODES];
 };
 
-// Reads a whole config. Embedded animations are validated but not kept: they
-// are large, so the player re-reads the active one with parseModeAnimation().
+// Reads a whole config. Animation modes embed a Lab animation, which is
+// validated but not kept: it is large, so the player re-reads the active one
+// with parseModeAnimation().
 bool parseModesConfig(JsonVariantConst doc, ModesConfig& cfg, anim::ParseError& error);
 
 // Reads the animation embedded in mode `index` of a config accepted by parseModesConfig().

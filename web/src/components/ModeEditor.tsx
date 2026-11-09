@@ -1,10 +1,10 @@
 import { HexColorPicker } from 'react-colorful'
 import { hexToRgb, rgbToHex, formatAlarmTime } from '../modeUtils'
-import type { AnimationId, Mode, ModeType } from '../types'
-import { ANIMATION_LABELS, MODE_TYPE_LABELS } from '../types'
+import type { Mode, ModeType } from '../types'
+import { MODE_TYPE_LABELS } from '../types'
+import { AnimationPicker } from './AnimationPicker'
 
 const MODE_TYPES = Object.keys(MODE_TYPE_LABELS) as ModeType[]
-const ANIMATIONS = Object.keys(ANIMATION_LABELS) as AnimationId[]
 
 type Props = {
   mode: Mode
@@ -102,30 +102,11 @@ export function ModeTypeEditor({ mode, brushColor, onBrushColorChange, onUpdate 
     case 'animation':
       return (
         <div className="type-editor">
-          <p className="type-editor-hint">Animated effect while this mode is active on the lamp.</p>
-          <label className="field-row">
-            Effect
-            <select
-              value={mode.animation ?? 'rainbow'}
-              onChange={e => onUpdate(m => ({ ...m, animation: e.target.value as AnimationId }))}
-            >
-              {ANIMATIONS.map(id => (
-                <option key={id} value={id}>{ANIMATION_LABELS[id]}</option>
-              ))}
-            </select>
-          </label>
-          {mode.animation !== 'rainbow' && mode.color && (
-            <div className="color-picker-block">
-              <div className="color-picker-label">
-                <span className="swatch" style={{ background: rgbToHex(mode.color) }} />
-                Color
-              </div>
-              <HexColorPicker
-                color={rgbToHex(mode.color)}
-                onChange={hex => onUpdate(m => ({ ...m, color: hexToRgb(hex) }))}
-              />
-            </div>
-          )}
+          <p className="type-editor-hint">
+            Plays a Lab animation while this mode is active. Pick a committed one, or upload JSON downloaded from the
+            Lab.
+          </p>
+          <AnimationPicker animation={mode.animation} onChange={animation => onUpdate(m => ({ ...m, animation }))} />
         </div>
       )
 
