@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "name": "Campfire night",
+  "loopMs": 5000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "generator": "solid",
+      "params": {
+        "color": {
+          "r": 0,
+          "g": 0,
+          "b": 8
+        }
+      }
+    },
+    {
+      "blend": "add",
+      "opacity": 0.6,
+      "speed": 0.5,
+      "hidden": false,
+      "mirror": true,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 80,
+            "b": 50
+          },
+          {
+            "r": 40,
+            "g": 180,
+            "b": 120
+          }
+        ],
+        "scale": 3,
+        "contrast": 2.2
+      },
+      "seed": 111,
+      "freeRunning": false
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "generator": "sparkle",
+      "params": {
+        "color": {
+          "r": 200,
+          "g": 210,
+          "b": 255
+        },
+        "density": 0.06,
+        "fade": 0.5
+      },
+      "seed": 112,
+      "freeRunning": false
+    },
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 2,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.8,
+        "to": 0.2,
+        "softness": 0.08
+      },
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 10,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 180,
+            "g": 30,
+            "b": 0
+          },
+          {
+            "r": 255,
+            "g": 120,
+            "b": 0
+          },
+          {
+            "r": 255,
+            "g": 210,
+            "b": 100
+          }
+        ],
+        "scale": 3,
+        "contrast": 1.9
+      },
+      "seed": 113,
+      "freeRunning": false
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 2,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.85,
+        "to": 0.15,
+        "softness": 0.05
+      },
+      "generator": "sparkle",
+      "params": {
+        "color": {
+          "r": 255,
+          "g": 170,
+          "b": 50
+        },
+        "density": 0.08,
+        "fade": 0.1
+      },
+      "seed": 114,
+      "freeRunning": false
+    }
+  ]
+}

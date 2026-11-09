@@ -14,15 +14,15 @@
 
 .led-strip {
   display: grid;
-  grid-template-columns: repeat(24, minmax(24px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(var(--led-count), minmax(20px, 1fr));
+  gap: 3px;
   touch-action: none;
   user-select: none;
   overflow-x: auto;
 }
 
 .led-strip.compact {
-  grid-template-columns: repeat(24, 4px);
+  grid-template-columns: repeat(var(--led-count), 3px);
   gap: 1px;
   overflow: hidden;
   pointer-events: none;
@@ -36,7 +36,7 @@
   justify-content: center;
   border: 2px solid transparent;
   transition: border-color 0.1s;
-  min-width: 24px;
+  min-width: 20px;
 }
 
 .led-strip.compact .led-cell {

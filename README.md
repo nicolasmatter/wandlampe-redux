@@ -1,6 +1,6 @@
 # Wandlampe
 
-Firmware and web controller for an Arduino Nano ESP32 wall lamp with 24 WS2812B LEDs.
+Firmware and web controller for an Arduino Nano ESP32 wall lamp: a ring of 48 WS2812B LEDs mounted flat on the wall, facing outward.
 
 The browser publishes mode configurations to an MQTT broker. The lamp stores them in flash, and its physical toggle switch cycles through off → mode 1 → off → mode 2 → … . Selecting a mode in the web editor does not activate it on the lamp.
 
@@ -8,7 +8,9 @@ The browser publishes mode configurations to an MQTT broker. The lamp stores the
 
 - `firmware/`: PlatformIO project, Arduino C++, FastLED, MQTT, NTP, and OTA updates.
 - `web/`: React + TypeScript + Vite controller, with its own npm dependencies.
+- `animations/`: reference animations saved from the Lab, also used as test fixtures.
 - `docs/mqtt.md`: shared protocol and configuration examples.
+- `docs/adr/`: architecture decisions. `GLOSSARY.md` defines the project's terms.
 - `docs/hardware/`: wiring and power-supply diagrams.
 - `specs/`: historical requirements and plans; these predate some implemented features.
 
@@ -27,7 +29,14 @@ Enter MQTT credentials in the browser. Credentials live in session storage; edit
 ```sh
 npm run build
 npm run lint
+npm test
 ```
+
+### Lab
+
+`/lab.html` is the animation test page (see [specs/lab](specs/lab/PRD.md) and [specs/lab-ring](specs/lab-ring/PRD.md)). Build animations from up to six layers of generators (`solid`, `bands`, `pulse`, `chase`, `sparkle`, `noise`, `strike`, `drops`, `ripple`) or keyframes. Layers can be mirrored (bottom → top on both sides) or limited to a region such as the top half. The preview shows the lamp's ring as it hangs on the wall: LED 0 at the bottom, counterclockwise, with light spilling outward onto the wall. It does not talk to MQTT; the lamp cannot play these animations yet.
+
+With `npm run dev`, **Save** writes `animations/<name>.json` in the repo and **Open** lists those files. The deployed Lab offers JSON download and upload instead. `npm test` checks that every committed animation is valid.
 
 ## Web deployment (Vercel)
 
@@ -76,4 +85,4 @@ When changing modes or MQTT messages, update both implementations and `docs/mqtt
 
 The web repository was imported with its complete Git history. Its pre-existing local edits were copied into `web/`; the original sibling checkout remains untouched. An obsolete self-referencing Git submodule entry was removed during consolidation.
 
-This migration starts from the local 24-LED firmware revision. A pre-existing commit on `origin/master` (`ceed774`) changes the firmware to 46 LEDs and adjusts configuration handling; reconcile it with the web model and fixed-size firmware arrays before merging that change.
+The LED count is `NUM_LEDS` in `firmware/include/config.h` and `LED_COUNT` in `web/src/config.ts`; change both together. Changing it resizes the firmware's stored config, so the lamp ignores its saved NVS copy once and waits for the retained MQTT config.

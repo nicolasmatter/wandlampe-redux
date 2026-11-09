@@ -20,9 +20,10 @@ function parseRgb(raw: unknown): RGB | null {
   }
 }
 
+// Shorter arrays (from configs saved for fewer LEDs) are padded with black.
 function parseLeds(raw: unknown): RGB[] | null {
-  if (!Array.isArray(raw) || raw.length < LED_COUNT) return null
-  return raw.slice(0, LED_COUNT).map(led => parseRgb(led) ?? BLACK)
+  if (!Array.isArray(raw)) return null
+  return Array.from({ length: LED_COUNT }, (_, i) => parseRgb(raw[i]) ?? BLACK)
 }
 
 function parseModeType(raw: unknown): ModeType {

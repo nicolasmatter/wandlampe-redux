@@ -18,3 +18,4 @@ Desktop.ini
 
 # macOS
 .DS_Store
+.playwright-mcp/

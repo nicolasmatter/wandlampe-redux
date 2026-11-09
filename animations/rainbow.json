@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "name": "Rainbow",
+  "loopMs": 6000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "bands",
+      "params": {
+        "colors": [
+          {
+            "r": 255,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 255,
+            "g": 255,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 255,
+            "b": 0
+          },
+          {
+            "r": 0,
+            "g": 255,
+            "b": 255
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 255
+          },
+          {
+            "r": 255,
+            "g": 0,
+            "b": 255
+          }
+        ],
+        "edge": "smooth",
+        "repeat": 1,
+        "scroll": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+.lab {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 2rem 1rem;
+  display: grid;
+  gap: var(--row-gap);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.lab-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.lab-header h1,
+.lab-panel h2 {
+  font-family: var(--font-heading);
+  margin: 0;
+}
+
+.lab-header a {
+  color: var(--color-text-muted);
+}
+
+.lab-preview,
+.lab-panel {
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.lab-strip {
+  display: grid;
+  gap: 3px;
+  padding: 1rem;
+  background: #111;
+  border-radius: calc(var(--border-radius) / 2);
+}
+
+.lab-led {
+  aspect-ratio: 1 / 1.5;
+  border-radius: 3px;
+}
+
+.lab-transport {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lab-field {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 16rem);
+  align-items: center;
+  gap: 1rem;
+}
+
+.lab-ring-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.lab-ring {
+  max-width: 100%;
+  border-radius: calc(var(--border-radius) / 2);
+}
+
+.lab-strip-wrap {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.lab-strip-marks {
+  position: relative;
+  height: 1rem;
+  margin-inline: 1rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.lab-strip-marks span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.lab-transport,
+.lab-preview-controls {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lab-preview-controls {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.lab-scrubber {
+  flex: 1;
+}
+
+.lab-time {
+  font-variant-numeric: tabular-nums;
+  min-width: 8rem;
+  text-align: right;
+}
+
+.lab-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lab-layer-editor,
+.lab-color-list,
+.lab-color-field {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.lab-params {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.lab-params:has(.react-colorful) {
+  align-items: flex-start;
+}
+
+.lab-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.lab-swatch {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: var(--border-radius-full);
+  border: 2px solid transparent;
+}
+
+.lab-swatch.selected {
+  border-color: var(--color-text);
+}
+
+.lab-stack {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.lab-stack-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  width: 100%;
+}
+
+.lab-stack-row.selected {
+  background: var(--color-surface-accent);
+}
+
+.lab-stack-row.hidden .lab-stack-name {
+  opacity: 0.5;
+}
+
+.lab-stack-name {
+  flex: 1;
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  text-align: left;
+}
+
+.lab-stack-name small {
+  color: var(--color-text-muted);
+}
+
+.lab-keyframes {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.lab-timeline,
+.lab-stop-bar {
+  position: relative;
+  height: 2.5rem;
+  border-radius: calc(var(--border-radius) / 2);
+  background: var(--color-surface-sunken);
+  margin-inline: 0.75rem;
+}
+
+.lab-stop-bar {
+  cursor: copy;
+}
+
+.lab-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-text);
+  pointer-events: none;
+}
+
+.lab-kf-marker,
+.lab-stop {
+  position: absolute;
+  top: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--color-text-muted);
+  touch-action: none;
+  cursor: grab;
+}
+
+.lab-kf-marker {
+  border-radius: 4px;
+}
+
+.lab-stop {
+  border-radius: var(--border-radius-full);
+}
+
+.lab-kf-marker.selected,
+.lab-stop.selected {
+  border-color: var(--color-text);
+  outline: 2px solid var(--color-accent);
+}
+
+.lab-hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.lab-warning {
+  color: var(--color-warning);
+  font-size: 0.85rem;
+}
+
+.lab-seed {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.lab-library {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lab-message {
+  padding: 0.75rem 1rem;
+  border-radius: calc(var(--border-radius) / 2);
+}
+
+.lab-message p {
+  margin: 0;
+}
+
+.lab-message.ok {
+  background: var(--color-surface-accent);
+}
+
+.lab-message.error {
+  background: var(--color-danger-surface);
+}

@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "name": "Pond",
+  "loopMs": 6000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 15,
+            "b": 25
+          },
+          {
+            "r": 0,
+            "g": 35,
+            "b": 45
+          }
+        ],
+        "scale": 3,
+        "contrast": 1.2
+      },
+      "seed": 2,
+      "freeRunning": false
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "ripple",
+      "params": {
+        "color": {
+          "r": 80,
+          "g": 200,
+          "b": 230
+        },
+        "rate": 4,
+        "speed": 0.5,
+        "width": 0.04,
+        "life": 0.7
+      },
+      "seed": 9,
+      "freeRunning": false
+    }
+  ]
+}

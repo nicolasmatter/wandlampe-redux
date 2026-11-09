@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "name": "Candle",
+  "loopMs": 3000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "solid",
+      "params": {
+        "color": {
+          "r": 120,
+          "g": 40,
+          "b": 0
+        }
+      }
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 4,
+      "hidden": false,
+      "mirror": false,
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          {
+            "r": 90,
+            "g": 35,
+            "b": 0
+          },
+          {
+            "r": 180,
+            "g": 90,
+            "b": 10
+          }
+        ],
+        "scale": 1,
+        "contrast": 1.5
+      },
+      "seed": 41,
+      "freeRunning": true
+    },
+    {
+      "blend": "add",
+      "opacity": 0.5,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "generator": "bands",
+      "region": {
+        "from": 0.3,
+        "to": 0.7,
+        "softness": 0.15
+      },
+      "params": {
+        "colors": [
+          {
+            "r": 255,
+            "g": 160,
+            "b": 40
+          },
+          {
+            "r": 255,
+            "g": 200,
+            "b": 90
+          }
+        ],
+        "edge": "smooth",
+        "repeat": 1,
+        "scroll": 0
+      }
+    }
+  ]
+}

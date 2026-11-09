@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "name": "Storm over city",
+  "loopMs": 10000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "generator": "noise",
+      "params": {
+        "colors": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 4
+          },
+          {
+            "r": 12,
+            "g": 14,
+            "b": 30
+          },
+          {
+            "r": 30,
+            "g": 32,
+            "b": 55
+          }
+        ],
+        "scale": 4,
+        "contrast": 1.6
+      },
+      "seed": 91,
+      "freeRunning": true
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": true,
+      "region": {
+        "from": 0.25,
+        "to": 0.75,
+        "softness": 0.04
+      },
+      "generator": "strike",
+      "params": {
+        "color": {
+          "r": 225,
+          "g": 230,
+          "b": 255
+        },
+        "rate": 1.5,
+        "flickers": 3,
+        "width": 0.5,
+        "afterglowMs": 600,
+        "origin": "top"
+      },
+      "seed": 92,
+      "freeRunning": true
+    },
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.75,
+        "to": 0.25,
+        "softness": 0.04
+      },
+      "generator": "solid",
+      "params": {
+        "color": {
+          "r": 8,
+          "g": 4,
+          "b": 0
+        }
+      }
+    },
+    {
+      "blend": "add",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "region": {
+        "from": 0.75,
+        "to": 0.25,
+        "softness": 0.04
+      },
+      "generator": "sparkle",
+      "params": {
+        "color": {
+          "r": 255,
+          "g": 170,
+          "b": 60
+        },
+        "density": 0.35,
+        "fade": 0.9
+      },
+      "seed": 93,
+      "freeRunning": false
+    },
+    {
+      "blend": "add",
+      "opacity": 0.5,
+      "speed": 2,
+      "hidden": false,
+      "mirror": true,
+      "generator": "drops",
+      "params": {
+        "color": {
+          "r": 110,
+          "g": 140,
+          "b": 210
+        },
+        "rate": 6,
+        "speed": 1.4,
+        "variation": 0.5,
+        "length": 0.1
+      },
+      "seed": 94,
+      "freeRunning": false
+    }
+  ]
+}

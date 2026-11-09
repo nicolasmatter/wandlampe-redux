@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "name": "Breathe",
+  "loopMs": 3000,
+  "layers": [
+    {
+      "blend": "normal",
+      "opacity": 1,
+      "speed": 1,
+      "hidden": false,
+      "mirror": false,
+      "generator": "pulse",
+      "params": {
+        "color": {
+          "r": 255,
+          "g": 140,
+          "b": 40
+        },
+        "min": 20,
+        "max": 255,
+        "curve": "sine"
+      }
+    }
+  ]
+}
