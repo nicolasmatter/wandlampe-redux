@@ -1,19 +1,47 @@
 #include "leds.h"
 #include <Arduino.h>
 #include <FastLED.h>
-#include <Preferences.h>
 #include <time.h>
+#include <animation.h>
 #include "config.h"
+#include "config_store.h"
 #include "connectivity.h"
+#include "psram_allocator.h"
 
 static CRGB leds[NUM_LEDS];
 static ModesConfig modesConfig;
-static bool connected = false;
-static Preferences prefs;
+static volatile bool connected = false;
+// The accepted config payload, kept to re-read the active mode's animation.
+static char* configJson = nullptr;
+static size_t configJsonLen = 0;
+
+static anim::ParseError configError = {""};
+
+static anim::Animation activeAnimation;
+static bool animationReady = false;
+static bool animationStale = true;
+static unsigned long animationStartMs = 0;
+static const TickType_t FRAME_TICKS = pdMS_TO_TICKS(16);  // ~60 fps
+
+// Mode changes, including on and off, blend from the last shown frame.
+static const unsigned long FADE_MS = 300;
+static CRGB fadeFrom[NUM_LEDS];
+static unsigned long fadeStartMs = 0;
+static bool fading = false;
+static uint8_t frameBrightness = 0;
+
+// Guards the state above and below against the render task. Held briefly by
+// config updates and status reads, and for one frame by the render task.
+static SemaphoreHandle_t stateLock;
+
+struct Locked {
+  Locked() { xSemaphoreTake(stateLock, portMAX_DELAY); }
+  ~Locked() { xSemaphoreGive(stateLock); }
+};
 
 static int cycleIndex = 0;
 static int activeMode = -1;
-static bool modeChanged = false;
+static volatile bool modeChanged = false;
 static bool lastSwitchState = HIGH;
 static unsigned long lastDebounce = 0;
 
@@ -26,24 +54,31 @@ static CRGB toCrgb(const LedRGB& c) {
   return CRGB(c.r, c.g, c.b);
 }
 
-static void saveConfig() {
-  prefs.begin("wl", false);
-  prefs.putBytes("cfg", &modesConfig, sizeof(modesConfig));
-  prefs.end();
+static bool parseJson(const char* json, size_t len, JsonDocument& doc) {
+  return deserializeJson(doc, json, len) == DeserializationError::Ok;
 }
 
-static bool loadConfig() {
-  prefs.begin("wl", true);
-  bool ok = prefs.getBytesLength("cfg") == sizeof(modesConfig);
-  if (ok) prefs.getBytes("cfg", &modesConfig, sizeof(modesConfig));
-  prefs.end();
-  return ok;
+// Re-reads the active mode's embedded animation and restarts it from t=0.
+static void loadActiveAnimation() {
+  animationStale = false;
+  animationReady = false;
+  animationStartMs = millis();
+  if (activeMode < 0 || (uint8_t)activeMode >= modesConfig.numModes) return;
+  const LedMode& mode = modesConfig.modes[activeMode];
+  if (mode.type != MODE_ANIMATION || mode.skipped || !configJson) return;
+
+  JsonDocument doc(PsramAllocator::instance());
+  anim::ParseError error;
+  if (!parseJson(configJson, configJsonLen, doc)) return;
+  animationReady = parseModeAnimation(doc, activeMode, activeAnimation, error);
+  if (!animationReady) Serial.printf("LEDs: %s\n", error.message);
 }
 
 static void setActiveMode(int mode) {
   if (mode == activeMode) return;
   activeMode = mode;
   modeChanged = true;
+  animationStale = true;
 }
 
 static int modeFromCycleIndex() {
@@ -75,27 +110,26 @@ static void renderOff() {
   fill_solid(leds, NUM_LEDS, CRGB::Black);
 }
 
-static void renderAnimation(const LedMode& mode) {
-  switch (mode.animation) {
-    case ANIM_RAINBOW:
-      fill_rainbow(leds, NUM_LEDS, (millis() / 20) % 256, 7);
-      break;
-    case ANIM_PULSE: {
-      CRGB c = toCrgb(mode.color);
-      uint8_t scale = (uint8_t)(127.5f + 127.5f * sin(TWO_PI * millis() / 1000.0f));
-      fill_solid(leds, NUM_LEDS, c.nscale8(scale));
-      break;
-    }
-    case ANIM_BREATHE: {
-      CRGB c = toCrgb(mode.color);
-      uint8_t scale = (uint8_t)(127.5f + 127.5f * sin(TWO_PI * millis() / 3000.0f));
-      fill_solid(leds, NUM_LEDS, c.nscale8(scale));
-      break;
-    }
-    default:
-      fill_solid(leds, NUM_LEDS, CRGB::Black);
-      break;
+static void renderEmbeddedAnimation() {
+  if (!animationReady) {
+    renderOff();
+    return;
   }
+  static anim::Rgb8 frame[NUM_LEDS];
+  static uint32_t frames = 0, totalUs = 0, worstUs = 0;
+  unsigned long now = millis();
+  uint32_t start = micros();
+  anim::render(activeAnimation, now - animationStartMs, now, frame, NUM_LEDS);
+  uint32_t took = micros() - start;
+
+  // Report the render cost every 10 s, to check the ~16 ms frame budget.
+  totalUs += took;
+  if (took > worstUs) worstUs = took;
+  if (++frames == 600) {
+    Serial.printf("LEDs: render avg %lu us, worst %lu us\n", (unsigned long)(totalUs / frames), (unsigned long)worstUs);
+    frames = totalUs = worstUs = 0;
+  }
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(frame[i].r, frame[i].g, frame[i].b);
 }
 
 static void renderAlarmClock(const LedMode& mode) {
@@ -147,11 +181,15 @@ static void dismissAlarmIfLeaving(int fromMode) {
 }
 
 static void renderMode(const LedMode& mode) {
-  FastLED.setBrightness(mode.brightness);
+  frameBrightness = mode.brightness;
+  if (mode.skipped) {
+    renderOff();
+    return;
+  }
   switch (mode.type) {
     case MODE_SINGLE_COLOR: renderSingleColor(mode); break;
     case MODE_GRADIENT:     renderGradient(mode);    break;
-    case MODE_ANIMATION:    renderAnimation(mode);   break;
+    case MODE_ANIMATION:    renderEmbeddedAnimation(); break;
     case MODE_ALARM_CLOCK:  renderAlarmClock(mode); break;
     case MODE_STATIC:
     default:                renderStatic(mode);      break;
@@ -189,19 +227,48 @@ static void runBootTest() {
   FastLED.show();
 }
 
+static void renderFrame();
+
+static void renderTask(void*) {
+  TickType_t wake = xTaskGetTickCount();
+  for (;;) {
+    {
+      Locked lock;
+      renderFrame();
+    }
+    vTaskDelayUntil(&wake, FRAME_TICKS);
+  }
+}
+
 void ledsSetup() {
+  stateLock = xSemaphoreCreateMutex();
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);
   pinMode(SWITCH_PIN, INPUT_PULLUP);
   lastSwitchState = digitalRead(SWITCH_PIN);
   runBootTest();
+  // Mode brightness is applied per frame, so crossfades blend between brightnesses.
+  FastLED.setBrightness(255);
 
-  if (loadConfig()) {
-    Serial.printf("LEDs: restored %u mode(s) from NVS\n", modesConfig.numModes);
+  configStoreSetup();
+  size_t len = 0;
+  char* stored = configStoreLoad(&len);
+  if (stored) {
+    anim::ParseError error;
+    if (ledsApplyConfigJson(stored, len, error)) {
+      Serial.printf("LEDs: restored %u mode(s) from flash\n", modesConfig.numModes);
+    } else {
+      Serial.printf("LEDs: stored config rejected: %s\n", error.message);
+    }
+    free(stored);
   }
+
+  // Same core as the Arduino loop (MQTT, OTA) but a higher priority, so frames
+  // keep their pace; the Wi-Fi stack runs on the other core.
+  xTaskCreatePinnedToCore(renderTask, "leds", 12288, nullptr, 2, nullptr, ARDUINO_RUNNING_CORE);
 }
 
-void ledsApplyConfig(const ModesConfig& cfg) {
+static void applyConfig(const ModesConfig& cfg) {
   int previousMode = activeMode;
   modesConfig = cfg;
   if (modesConfig.numModes > MAX_MODES) modesConfig.numModes = MAX_MODES;
@@ -218,15 +285,66 @@ void ledsApplyConfig(const ModesConfig& cfg) {
     cycleIndex = 0;
     setActiveMode(-1);
   }
-  saveConfig();
+  animationStale = true;
+}
+
+static bool acceptConfigJson(const char* json, size_t len, anim::ParseError& error);
+
+bool ledsApplyConfigJson(const char* json, size_t len, anim::ParseError& error) {
+  bool ok = acceptConfigJson(json, len, error);
+  Locked lock;
+  configError = ok ? anim::ParseError{""} : error;
+  if (ok) {
+    for (int i = 0; i < modesConfig.numModes; i++) {
+      if (modesConfig.modes[i].skipped) Serial.printf("LEDs: skipping %s\n", modesConfig.modes[i].problem.message);
+    }
+  }
+  return ok;
+}
+
+static bool acceptConfigJson(const char* json, size_t len, anim::ParseError& error) {
+  JsonDocument doc(PsramAllocator::instance());
+  if (!parseJson(json, len, doc)) {
+    snprintf(error.message, sizeof(error.message), "config is not valid JSON");
+    return false;
+  }
+  static ModesConfig cfg;
+  if (!parseModesConfig(doc, cfg, error)) return false;
+
+  bool unchanged = configJson && configJsonLen == len && memcmp(configJson, json, len) == 0;
+  if (!unchanged) {
+    char* copy = (char*)ps_malloc(len);
+    if (!copy) {
+      snprintf(error.message, sizeof(error.message), "config does not fit in memory");
+      return false;
+    }
+    memcpy(copy, json, len);
+    {
+      Locked lock;
+      free(configJson);
+      configJson = copy;
+      configJsonLen = len;
+    }
+    if (!configStoreSave(json, len)) Serial.println("LEDs: could not store config in flash");
+  }
+  Locked lock;
+  applyConfig(cfg);
+  return true;
 }
 
 void ledsSetConnected(bool isConnected) {
   connected = isConnected;
 }
 
-int ledsGetActiveMode() {
-  return activeMode;
+void ledsGetStatus(LedsStatus& out) {
+  Locked lock;
+  out.activeMode = activeMode;
+  out.modeCount = modesConfig.numModes;
+  for (int i = 0; i < modesConfig.numModes; i++) {
+    const LedMode& mode = modesConfig.modes[i];
+    out.problems[i] = mode.skipped ? mode.problem : anim::ParseError{""};
+  }
+  out.configError = configError;
 }
 
 bool ledsTakeModeChange(int* outMode) {
@@ -236,18 +354,36 @@ bool ledsTakeModeChange(int* outMode) {
   return true;
 }
 
-void ledsUpdate() {
+static void renderFrame() {
   handleSwitch();
 
+  unsigned long now = millis();
   if (prevActiveMode != activeMode) {
     dismissAlarmIfLeaving(prevActiveMode);
+    // Blend from what is on the LEDs right now, even mid-fade.
+    memcpy(fadeFrom, leds, sizeof(leds));
+    fadeStartMs = now;
+    fading = prevActiveMode != -2;  // no fade at boot
     prevActiveMode = activeMode;
   }
+  if (animationStale) loadActiveAnimation();
 
+  frameBrightness = 0;
   if (activeMode >= 0 && (uint8_t)activeMode < modesConfig.numModes) {
     renderMode(modesConfig.modes[activeMode]);
   } else {
     renderOff();
+  }
+  nscale8(leds, NUM_LEDS, frameBrightness);
+
+  if (fading) {
+    unsigned long elapsed = now - fadeStartMs;
+    if (elapsed >= FADE_MS) {
+      fading = false;
+    } else {
+      fract8 amount = (fract8)(elapsed * 255 / FADE_MS);
+      for (int i = 0; i < NUM_LEDS; i++) leds[i] = blend(fadeFrom[i], leds[i], amount);
+    }
   }
 
   if (!connected) {

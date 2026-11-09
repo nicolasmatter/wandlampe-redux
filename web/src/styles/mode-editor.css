@@ -227,6 +227,26 @@
   line-height: 1.4;
 }
 
+.save-hint.error,
+.lamp-problem,
+.animation-errors {
+  color: var(--color-danger);
+}
+
+.animation-errors {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.animation-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grid-gap);
+  align-items: center;
+}
+
 @media (max-width: 640px) {
   .mode-meta > .field-row,
   .mode-meta > button,
@@ -238,4 +258,9 @@
   .gradient-pickers .color-picker-block {
     grid-column: span 12;
   }
+}
+
+.lamp-problem {
+  font-size: 0.85rem;
+  margin: 0;
 }

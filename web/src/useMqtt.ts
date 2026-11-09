@@ -2,10 +2,27 @@ import { useEffect, useRef, useState } from 'react'
 import mqtt from 'mqtt'
 import type { MqttClient } from 'mqtt'
 import { BROKER_URL, MAX_MODES, TOPIC_CONFIG, TOPIC_STATUS } from './config'
-import { modeToPayload, parseMode } from './modeUtils'
-import type { DeviceStatus, Mode } from './types'
+import { configPayload, parseMode } from './modeUtils'
+import type { DeviceStatus, Mode, ModeProblem } from './types'
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
+
+function parseProblems(raw: unknown): ModeProblem[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter(
+    (p): p is ModeProblem => typeof p?.mode === 'number' && typeof p?.error === 'string',
+  )
+}
+
+/** True if the config still names the lamp's former hardcoded animations. */
+function hasLegacyAnimations(payload: string): boolean {
+  try {
+    const doc = JSON.parse(payload)
+    return Array.isArray(doc.modes) && doc.modes.some((m: { animation?: unknown }) => typeof m?.animation === 'string')
+  } catch {
+    return false
+  }
+}
 
 function parseModes(payload: string): Mode[] | null {
   try {
@@ -30,8 +47,10 @@ function parseModes(payload: string): Mode[] | null {
 export function useMqtt(username: string, password: string) {
   const clientRef = useRef<MqttClient | null>(null)
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
-  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({ online: null, activeMode: null })
+  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({ online: null, activeMode: null, errors: [], configError: null })
   const [retainedModes, setRetainedModes] = useState<Mode[] | null>(null)
+  // The retained config used the former hardcoded animations; they were converted and need publishing.
+  const [retainedConverted, setRetainedConverted] = useState(false)
 
   useEffect(() => {
     if (!username || !password) return
@@ -54,13 +73,18 @@ export function useMqtt(username: string, password: string) {
           setDeviceStatus({
             online: msg.status === 'online',
             activeMode: typeof msg.activeMode === 'number' ? msg.activeMode : null,
+            errors: parseProblems(msg.errors),
+            configError: typeof msg.configError === 'string' ? msg.configError : null,
           })
         } catch {}
       }
 
       if (topic === TOPIC_CONFIG) {
         const modes = parseModes(text)
-        if (modes) setRetainedModes(modes)
+        if (modes) {
+          setRetainedModes(modes)
+          setRetainedConverted(hasLegacyAnimations(text))
+        }
       }
     })
 
@@ -73,12 +97,12 @@ export function useMqtt(username: string, password: string) {
   function publish(modes: Mode[]) {
     clientRef.current?.publish(
       TOPIC_CONFIG,
-      JSON.stringify({ modes: modes.map(modeToPayload) }),
+      configPayload(modes),
       { retain: true, qos: 1 }
     )
   }
 
-  return { status, deviceStatus, retainedModes, publish }
+  return { status, deviceStatus, retainedModes, retainedConverted, publish }
 }
 
 export { defaultModes } from './modeUtils'

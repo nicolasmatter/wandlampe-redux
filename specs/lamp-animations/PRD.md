@@ -43,7 +43,7 @@ The firmware gets a C++ port of the animation engine. A mode of type `animation`
 
 - **Transport (ADR 0001).** Animations travel inside the single retained `wandlampe/config` message. An `animation` mode becomes `{ type: "animation", brightness, name?, animation: <Lab animation JSON> }`; the old `animation: "rainbow" | "pulse" | "breathe"` string form is legacy.
 - **Size.** Firmware MQTT buffer raised to 32 KB; the controller refuses to publish a config larger than that. Committed animations are ≤3.5 KB minified.
-- **Persistence.** The firmware stores the last accepted config as a JSON file in flash (LittleFS) instead of a fixed struct in NVS, and re-parses it at boot.
+- **Persistence.** The firmware stores the last accepted config as a JSON file on the board's existing FAT flash partition (FFat) instead of a fixed struct in NVS, and re-parses it at boot.
 - **Firmware engine (deep module).** A C++ port of `render(animation, time, ledCount, clock) → RGB[]` with the same generators, keyframes, easing, blending, mirror, regions, seeded hash and loopable noise as the TypeScript engine. Pure: no Arduino, FastLED or ArduinoJson dependency, so it builds and tests on the host. It uses `float`; looser agreement with the browser is accepted.
 - **Firmware animation parser (deep module).** Parses an animation JSON object into the engine's structures, or returns a path-specific error. Mirrors the TypeScript format rules.
 - **Config handling.** A bad animation mode is skipped (shown black); other modes apply. Errors are published on `wandlampe/status` as a list of `{ mode, error }`.
@@ -76,4 +76,3 @@ The firmware gets a C++ port of the animation engine. A mode of type `animation`
 
 - Exact crossfade duration; tune on the lamp.
 - Whether the controller should also preview on a ring, like the Lab.
-- Whether the Nano ESP32's default partition table has room for LittleFS or needs a custom one.

@@ -8,7 +8,7 @@ Durable decisions that apply across all phases:
 
 - **Transport**: animations ride inside the single retained `wandlampe/config` message. Animation mode: `{ type: "animation", brightness, name?, animation: <Lab animation JSON> }`. The string form `animation: "rainbow" | "pulse" | "breathe"` is legacy and converted by the controller.
 - **Limits**: config ≤ 32 KB (firmware MQTT buffer and controller check); 48 LEDs.
-- **Persistence**: last accepted config stored as JSON in flash (LittleFS), re-parsed at boot.
+- **Persistence**: last accepted config stored as JSON on the existing FAT flash partition (FFat), re-parsed at boot.
 - **Engine**: C++ port of `render(animation, time, ledCount, clock) → RGB[]`, pure (no Arduino/FastLED/ArduinoJson), `float` math, testable in a PlatformIO `native` env.
 - **Reference**: fixtures of frames rendered by the TypeScript engine for every committed animation; C++ must match within ±3 per channel, ≤2% of samples allowed beyond.
 - **Errors**: bad animation mode is skipped (black); `wandlampe/status` carries `errors: [{ mode, error }]`.
@@ -26,10 +26,10 @@ A pure C++ engine on the host that renders `solid` and `bands` layers, a script 
 
 ### Acceptance criteria
 
-- [ ] Reference-frame export script runs from `web/` and writes fixtures for chosen animations, times and LED counts
-- [ ] PlatformIO `native` test env builds the engine without Arduino
-- [ ] `solid` and `bands` animations match their fixtures within tolerance
-- [ ] Firmware builds for the board unchanged in behavior
+- [x] Reference-frame export script runs from `web/` and writes fixtures for chosen animations, times and LED counts
+- [x] PlatformIO `native` test env builds the engine without Arduino
+- [x] `solid` and `bands` animations match their fixtures within tolerance
+- [x] Firmware builds for the board unchanged in behavior
 
 ---
 
@@ -45,7 +45,7 @@ The firmware accepts the new animation mode shape, parses the embedded animation
 
 - [ ] A hand-published config with a `solid`/`bands` animation mode plays on the lamp
 - [ ] Config survives reboot and OTA; first boot after this change falls back to the retained MQTT config
-- [ ] Native tests cover parsing an animation mode and a 30 KB config
+- [x] Native tests cover parsing an animation mode and a 30 KB config
 - [ ] Other mode types behave as before
 
 ---
@@ -60,8 +60,8 @@ Port `pulse`, `chase`, `sparkle`, `noise`, `strike`, `drops`, `ripple`, the seed
 
 ### Acceptance criteria
 
-- [ ] Fixtures for single-region committed animations pass
-- [ ] Parser rejects unknown generators and out-of-range values with path-specific errors
+- [x] Fixtures for single-region committed animations pass
+- [x] Parser rejects unknown generators and out-of-range values with path-specific errors
 - [ ] Free-running layers run on the lamp without repeating at the loop
 
 ---
@@ -76,7 +76,7 @@ Port mirror, regions with softness, `normal`/`add` blending, opacity and up to s
 
 ### Acceptance criteria
 
-- [ ] Fixtures for every committed animation pass, including the split ones
+- [x] Fixtures for every committed animation pass, including the split ones
 - [ ] Render time for the heaviest committed animation is measured on the lamp and stays well under a 16 ms frame
 
 ---
@@ -92,9 +92,9 @@ The mode editor's animation type offers the committed animations bundled at buil
 ### Acceptance criteria
 
 - [ ] Picking a committed animation and applying it plays it on the lamp
-- [ ] Uploading an invalid file shows the Lab's errors and changes nothing
-- [ ] Publishing a config over 32 KB is refused with a clear message
-- [ ] Vitest covers the round trip of a mode with an animation and the size check
+- [x] Uploading an invalid file shows the Lab's errors and changes nothing
+- [x] Publishing a config over 32 KB is refused with a clear message
+- [x] Vitest covers the round trip of a mode with an animation and the size check
 
 ---
 
@@ -108,9 +108,9 @@ The controller converts legacy `rainbow`/`pulse`/`breathe` modes to equivalent a
 
 ### Acceptance criteria
 
-- [ ] Loading a legacy config shows animation modes that look like the old presets
-- [ ] Firmware has no preset animation code; alarm clock unchanged
-- [ ] Vitest covers legacy conversion
+- [x] Loading a legacy config shows animation modes that look like the old presets
+- [x] Firmware has no preset animation code; alarm clock unchanged
+- [x] Vitest covers legacy conversion
 
 ---
 
@@ -125,8 +125,8 @@ Firmware skips modes it can't play, shows them black, and publishes the reasons 
 ### Acceptance criteria
 
 - [ ] A config with one bad mode applies the others and reports `{ mode, error }`
-- [ ] The controller marks the bad mode with the lamp's error
-- [ ] Native tests cover skipped modes and error texts; `docs/mqtt.md` documents the status field
+- [x] The controller marks the bad mode with the lamp's error
+- [x] Native tests cover skipped modes and error texts; `docs/mqtt.md` documents the status field
 
 ---
 
