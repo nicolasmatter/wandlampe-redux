@@ -21,6 +21,11 @@ import { LedStrip } from "./components/LedStrip";
 import { MODE_TYPE_LABELS } from "./types";
 import { useMqtt } from "./useMqtt";
 
+// Credential Management API (Chromium only); not in TypeScript's DOM types.
+declare class PasswordCredential extends Credential {
+  constructor(data: { id: string; password: string; name?: string });
+}
+
 export default function App() {
   const [username, setUsername] = useState(
     () => sessionStorage.getItem("mq_user") ?? "",
@@ -49,6 +54,15 @@ export default function App() {
     authed ? password : "",
     loginAttempt,
   );
+
+  // Password managers can't tell when an in-page login succeeded; tell browsers that support it.
+  useEffect(() => {
+    if (!hasConnected || !("PasswordCredential" in window)) return;
+    const credential = new PasswordCredential({ id: username, password, name: username });
+    navigator.credentials.store(credential).catch(() => {});
+    // Only once per successful login, not on every keystroke afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasConnected]);
 
   useEffect(() => {
     if (retainedModes) {
@@ -87,6 +101,12 @@ export default function App() {
     sessionStorage.setItem("mq_pass", password);
     setAuthed(true);
     setLoginAttempt((n) => n + 1);
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem("mq_pass");
+    setPassword("");
+    setAuthed(false);
   }
 
   function updateMode(updater: (mode: Mode) => Mode) {
@@ -206,6 +226,9 @@ export default function App() {
           {status === "connected"
             ? `${online === null ? "device unknown" : online ? "device online" : "device offline"} · ${deviceModeLabel}`
             : status}
+          <button type="button" className="logout" onClick={handleLogout}>
+            Log out
+          </button>
         </div>
       </header>
 

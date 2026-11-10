@@ -40,3 +40,9 @@ header h1 {
 .dot.disconnected {
   background: var(--color-danger);
 }
+
+.logout {
+  margin-left: 0.6rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+}
