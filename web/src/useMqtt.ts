@@ -6,6 +6,14 @@ import { configPayload, parseMode } from './modeUtils'
 import type { DeviceStatus, Mode, ModeProblem } from './types'
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
+// Why a login attempt failed before its first connection.
+export type LoginFailure = 'auth' | 'unreachable' | null
+
+// MQTT 3.1.1 CONNACK codes 4 (bad username or password) and 5 (not authorized).
+function isAuthError(err: unknown): boolean {
+  const code = (err as { code?: unknown })?.code
+  return code === 4 || code === 5 || code === 134 || code === 135
+}
 
 function parseProblems(raw: unknown): ModeProblem[] {
   if (!Array.isArray(raw)) return []
@@ -44,10 +52,14 @@ function parseModes(payload: string): Mode[] | null {
   return null
 }
 
-export function useMqtt(username: string, password: string) {
+// `attempt` changes on every login submit, so the same credentials can be retried.
+export function useMqtt(username: string, password: string, attempt = 0) {
   const clientRef = useRef<MqttClient | null>(null)
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
   const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>({ online: null, activeMode: null, errors: [], configError: null })
+  const [loginFailure, setLoginFailure] = useState<LoginFailure>(null)
+  // The broker accepted these credentials at least once.
+  const [hasConnected, setHasConnected] = useState(false)
   const [retainedModes, setRetainedModes] = useState<Mode[] | null>(null)
   // The retained config used the former hardcoded animations; they were converted and need publishing.
   const [retainedConverted, setRetainedConverted] = useState(false)
@@ -56,10 +68,15 @@ export function useMqtt(username: string, password: string) {
     if (!username || !password) return
 
     setStatus('connecting')
+    let ended = false
+    let connectedOnce = false
+    let failure: LoginFailure = null
     const client = mqtt.connect(BROKER_URL, { username, password, reconnectPeriod: 0 })
     clientRef.current = client
 
     client.on('connect', () => {
+      connectedOnce = true
+      setHasConnected(true)
       setStatus('connected')
       client.subscribe([TOPIC_STATUS, TOPIC_CONFIG])
     })
@@ -88,11 +105,24 @@ export function useMqtt(username: string, password: string) {
       }
     })
 
-    client.on('error', () => setStatus('disconnected'))
-    client.on('close', () => setStatus('disconnected'))
+    client.on('error', (err) => {
+      if (isAuthError(err)) failure = 'auth'
+      setStatus('disconnected')
+    })
+    client.on('close', () => {
+      if (ended) return
+      setStatus('disconnected')
+      if (!connectedOnce) setLoginFailure(failure ?? 'unreachable')
+    })
 
-    return () => { client.end(); clientRef.current = null }
-  }, [username, password])
+    return () => {
+      ended = true
+      client.end()
+      clientRef.current = null
+      setLoginFailure(null)
+      setHasConnected(false)
+    }
+  }, [username, password, attempt])
 
   function publish(modes: Mode[]) {
     clientRef.current?.publish(
@@ -102,7 +132,7 @@ export function useMqtt(username: string, password: string) {
     )
   }
 
-  return { status, deviceStatus, retainedModes, retainedConverted, publish }
+  return { status, loginFailure, hasConnected, deviceStatus, retainedModes, retainedConverted, publish }
 }
 
 export { defaultModes } from './modeUtils'

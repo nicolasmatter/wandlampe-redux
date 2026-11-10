@@ -28,9 +28,11 @@ export default function App() {
   const [password, setPassword] = useState(
     () => sessionStorage.getItem("mq_pass") ?? "",
   );
+  // Credentials are being tried; the app shows once the broker accepts them.
   const [authed, setAuthed] = useState(
     !!(sessionStorage.getItem("mq_user") && sessionStorage.getItem("mq_pass")),
   );
+  const [loginAttempt, setLoginAttempt] = useState(0);
 
   const [modes, setModes] = useState<Mode[]>(
     () => loadLocalModes() ?? defaultModes(),
@@ -42,9 +44,10 @@ export default function App() {
   const isPainting = useRef(false);
   const skipDirty = useRef(true);
 
-  const { status, deviceStatus, retainedModes, retainedConverted, publish } = useMqtt(
+  const { status, loginFailure, hasConnected, deviceStatus, retainedModes, retainedConverted, publish } = useMqtt(
     authed ? username : "",
     authed ? password : "",
+    loginAttempt,
   );
 
   useEffect(() => {
@@ -83,6 +86,7 @@ export default function App() {
     sessionStorage.setItem("mq_user", username);
     sessionStorage.setItem("mq_pass", password);
     setAuthed(true);
+    setLoginAttempt((n) => n + 1);
   }
 
   function updateMode(updater: (mode: Mode) => Mode) {
@@ -154,7 +158,15 @@ export default function App() {
     }
   }
 
-  if (!authed) {
+  // Until the broker accepts the credentials, stay on the login form; later drops show in the header.
+  if (!authed || !hasConnected) {
+    const checking = authed && !loginFailure;
+    const loginError =
+      authed && loginFailure
+        ? loginFailure === "auth"
+          ? "Wrong username or password."
+          : "Can't reach the broker. Check the connection or the broker's certificate."
+        : null;
     return (
       <div className="login">
         <h1>w-r</h1>
@@ -174,7 +186,12 @@ export default function App() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button type="submit">Connect</button>
+          <button type="submit" disabled={checking}>
+            {checking ? "Connecting…" : "Connect"}
+          </button>
+          {loginError && (
+            <p className="login-error" role="alert">{loginError}</p>
+          )}
         </form>
       </div>
     );

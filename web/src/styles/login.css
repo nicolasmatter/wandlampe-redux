@@ -38,3 +38,14 @@
     linear-gradient(var(--color-surface-hover), var(--color-surface-hover)) padding-box,
     var(--color-border) border-box;
 }
+
+.login button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.login-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+}
